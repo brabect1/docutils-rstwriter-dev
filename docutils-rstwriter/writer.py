@@ -295,6 +295,8 @@ class Writer(writers.Writer):
                 s += "   "
             elif isinstance(node, nodes.Admonition):
                 s += "   "
+            elif isinstance(node, nodes.image):
+                s += "   "
 
             return s
 
@@ -681,3 +683,29 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
         # attributes are processed within the `visit_Text` method.
         self.tstack += self.vindent() + Writer.get_indent(node.parent)
         self.tstack += ".. " + node.__class__.__name__ + '::'
+
+    image_attr_map = {
+            'names': 'name',
+            'classes': 'class'
+            };
+
+    def visit_image(self, node):
+        p = node.parent
+        if not isinstance(p, nodes.list_item):
+            self.tstack += self.vindent()
+        self.tstack += Writer.get_indent(node.parent)
+        self.tstack += ".. " + node.__class__.__name__ + ':: ' \
+                + node['uri'] + '\n'
+
+        indent = Writer.get_indent(node)
+        for (k,v) in RstCollectVisitor.image_attr_map.items():
+            if k in node:
+                val = node[k]
+                if isinstance(val,list) and len(val) == 0:
+                    continue
+                self.tstack += indent + ':' + v + ': '
+                if isinstance(val,list):
+                    self.tstack += ' '.join(val)
+                else:
+                    self.tstack += val
+                self.tstack += '\n'
