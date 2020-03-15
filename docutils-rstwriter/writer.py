@@ -293,6 +293,8 @@ class Writer(writers.Writer):
                 s += "  "
             elif isinstance(node, nodes.comment):
                 s += "   "
+            elif isinstance(node, nodes.Admonition):
+                s += "   "
 
             return s
 
@@ -386,6 +388,10 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
                       #lines.append(Writer.get_indent(pe.parent)+line+"#"+str(i))
                   elif isinstance(pe, nodes.paragraph) and isinstance(pe.parent, nodes.field_body) and pe.parent.index(pe)==0:
                       lines.append(' '+line)
+                  elif isinstance(pe, nodes.paragraph) and isinstance(pe.parent, nodes.Admonition) and pe.parent.index(pe)==0:
+                      lines.append(' '+line)
+                  elif isinstance(pe, nodes.title) and isinstance(pe.parent, nodes.admonition):
+                      lines.append(' '+line)
                   elif isinstance(pe, nodes.attribution):
                       lines.append(indent + '-- ' + line)
                   elif isinstance(pe, nodes.comment):
@@ -417,32 +423,38 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
             self.tstack += ''.join(lines)# + '\n'
 
     def visit_title(self, node):
-        x = node.rawsource;
-        if x:
-            # Normally we would leave formatting of children to be resolved
-            # by descending in the node tree. However, titles are one liners
-            # and so we may take the raw form right away.
-            self.tstack += self.vindent() + x
-            raise nodes.SkipChildren()
-        else:
-            # There are rare exceptions (e.g. `subtitle` nodes) when rawsource
-            # is empty. There we let the node tree parsing/walking go on.
-            self.tstack += self.vindent()
+        if not isinstance(node.parent, nodes.admonition):
+            x = node.rawsource;
+            if x:
+                # Normally we would leave formatting of children to be resolved
+                # by descending in the node tree. However, titles are one liners
+                # and so we may take the raw form right away.
+                self.tstack += self.vindent() + x
+                raise nodes.SkipChildren()
+            else:
+                # There are rare exceptions (e.g. `subtitle` nodes) when rawsource
+                # is empty. There we let the node tree parsing/walking go on.
+                self.tstack += self.vindent()
 
     def depart_title(self, node):
-        lvl = node.get("hlevel")
-        if lvl == None:
-            lvl = 0;
-        if lvl >= len(self.heads):
-            lvl = len(self.heads)-1
-        x = node.rawsource;
-        if not x:
-            # When we do not have a rawsource (e.g. `subtitle` nodes), the
-            # title character length based on `node.astext()` may be too
-            # small (e.g. `*Emphasis title*` becomes "astext" `Emphasis title`).
-            # Hence we use twice that length!
-            x = node.astext() * 2;
-        self.tstack += "\n" + (self.heads[lvl] * len(x)) + "\n"
+        if isinstance(node.parent, nodes.admonition):
+            # Need to add newline as we would do with an ordinary
+            # paragraph
+            self.tstack += '\n'
+        else:
+            lvl = node.get("hlevel")
+            if lvl == None:
+                lvl = 0;
+            if lvl >= len(self.heads):
+                lvl = len(self.heads)-1
+            x = node.rawsource;
+            if not x:
+                # When we do not have a rawsource (e.g. `subtitle` nodes), the
+                # title character length based on `node.astext()` may be too
+                # small (e.g. `*Emphasis title*` becomes "astext" `Emphasis title`).
+                # Hence we use twice that length!
+                x = node.astext() * 2;
+            self.tstack += "\n" + (self.heads[lvl] * len(x)) + "\n"
 
     def visit_subtitle(self, node):
         self.visit_title(node)
@@ -452,7 +464,7 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
 
     def visit_paragraph(self, node):
         p = node.parent
-        if not (isinstance(p, nodes.list_item) or isinstance(p, nodes.field_body)):
+        if not (isinstance(p, nodes.list_item) or isinstance(p, nodes.field_body) or isinstance(p, nodes.Admonition)):
             # For all but a paragraph in certain elements add a vertical space
             # before the paragraph. The special elements are:
             # - list_item's
@@ -461,7 +473,7 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
         elif p.index(node) != 0:
             # For 2nd+ paragraph in a list item we need to add a vertical
             # space.
-            self.tstack += '\n'
+            self.tstack += self.vindent()
         #else: self.tstack += '\n'
         #self.tstack += node.astext()
         #raise nodes.SkipChildren()
@@ -609,3 +621,19 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
         cell = tableclass.MultiCell(text=self.tstack,
                 morerows=morerows, morecols=morecols)
         self.table_rowcells[-1].append( cell )
+
+    def visit_note(self, node):
+        #self.tstack += self.vindent() + ' '*len(Writer.get_indent(node.parent)) + ".. "
+        self.tstack += self.vindent() + Writer.get_indent(node.parent)
+        self.tstack += ".. " + node.__class__.__name__ + '::'
+
+    def visit_admonition(self, node):   self.visit_note(node)
+    def visit_attention(self, node):    self.visit_note(node)
+    def visit_caution(self, node):      self.visit_note(node)
+    def visit_danger(self, node):       self.visit_note(node)
+    def visit_error(self, node):        self.visit_note(node)
+    def visit_important(self, node):    self.visit_note(node)
+    def visit_tip(self, node):          self.visit_note(node)
+    def visit_hint(self, node):         self.visit_note(node)
+    def visit_warning(self, node):      self.visit_note(node)
+
