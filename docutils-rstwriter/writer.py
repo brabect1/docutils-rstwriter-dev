@@ -417,6 +417,24 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
                   lines.append(indent+line)
               i += 1
 
+        # For the `title` node of an `admonition` node, we need to
+        # see if there are `class` and `name` attributes.
+        if isinstance(pe, nodes.title) and isinstance(pe.parent, nodes.admonition):
+            admonition = pe.parent
+            hasNames = 'names' in admonition and len(admonition['names']) > 0
+            hasClasses = 'classes' in admonition and len(admonition['classes']) > 0
+
+            if hasNames:
+                lines.append('\n' + indent + ':name: ' + ' '.join(admonition['names']))
+
+            if hasClasses:
+                # The `admonition` node type always has the `class` attribute,
+                # either the default one or a user one. We ignore the default
+                # one.
+                defaultClass='admonition-'+nodes.make_id(pe.astext())
+                if defaultClass != admonition['classes'][0]:
+                    lines.append('\n' + indent + ':class: ' + ' '.join(admonition['classes']))
+
         if lines:
             #self.tstack += node.astext()+"<!>"
             #self.tstack += ''.join(node.astext().splitlines(True))+"!"
@@ -623,11 +641,30 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
         self.table_rowcells[-1].append( cell )
 
     def visit_note(self, node):
-        #self.tstack += self.vindent() + ' '*len(Writer.get_indent(node.parent)) + ".. "
-        self.tstack += self.vindent() + Writer.get_indent(node.parent)
+        p = node.parent
+        if not isinstance(p, nodes.list_item):
+            self.tstack += self.vindent()
+        self.tstack += Writer.get_indent(node.parent)
         self.tstack += ".. " + node.__class__.__name__ + '::'
 
-    def visit_admonition(self, node):   self.visit_note(node)
+        indent = Writer.get_indent(node)
+        hasNames = 'names' in node and len(node['names']) > 0
+        hasClasses = 'classes' in node and len(node['classes']) > 0
+
+        if hasNames or hasClasses:
+            self.tstack += '\n'
+
+        if hasNames:
+            self.tstack += indent + ':name: ' + ' '.join(node['names']) + '\n'
+
+        if hasClasses:
+            self.tstack += indent + ':class: ' + ' '.join(node['classes']) + '\n'
+
+        if (hasNames or hasClasses) and len(node.children) > 0:
+            # using indent less one space (as the space will be
+            # added by the `visit_Text` method)
+            self.tstack += '\n' + ' '*(len(indent)-1)
+
     def visit_attention(self, node):    self.visit_note(node)
     def visit_caution(self, node):      self.visit_note(node)
     def visit_danger(self, node):       self.visit_note(node)
@@ -637,3 +674,10 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
     def visit_hint(self, node):         self.visit_note(node)
     def visit_warning(self, node):      self.visit_note(node)
 
+    def visit_admonition(self, node):
+        # This admonition class is special as it renders the 1st
+        # paragraph as a title and that `class` and `name`
+        # attributes shall come only after the title. Hence the
+        # attributes are processed within the `visit_Text` method.
+        self.tstack += self.vindent() + Writer.get_indent(node.parent)
+        self.tstack += ".. " + node.__class__.__name__ + '::'

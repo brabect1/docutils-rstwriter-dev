@@ -25,6 +25,34 @@ totest = {}
 
 totest['admonitions'] = [
 ["""\
+.. note:: some note
+""",
+"""\
+.. note:: some note
+"""],
+["""\
+Some paragraph.
+
+.. note:: some note
+
+Another paragraph.
+""",
+"""\
+Some paragraph.
+
+.. note:: some note
+
+Another paragraph.
+"""],
+["""\
+Some paragraph.
+.. note:: Not a note but 2nd line of the paragraph.
+""",
+"""\
+Some paragraph.
+.. note:: Not a note but 2nd line of the paragraph.
+"""],
+["""\
 .. attention:: attention text
 
 .. note:: note text
@@ -164,81 +192,141 @@ totest['admonitions'] = [
    Other paragraphs need not
    align too.
 """],
-#TODO ["""\
-#TODO .. Attention:: Directives at large.
-#TODO 
-#TODO .. Note:: :name: mynote
-#TODO    :class: testnote
-#TODO 
-#TODO    Admonitions support the generic "name" and "class" options.
-#TODO 
-#TODO .. Tip:: 15% if the
-#TODO    service is good.
-#TODO 
-#TODO .. Hint:: It's bigger than a bread box.
-#TODO 
-#TODO - .. WARNING:: Strong prose may provoke extreme mental exertion.
-#TODO      Reader discretion is strongly advised.
-#TODO - .. Error:: Does not compute.
-#TODO 
-#TODO .. Caution::
-#TODO 
-#TODO    Don't take any wooden nickels.
-#TODO 
-#TODO .. DANGER:: Mad scientist at work!
-#TODO 
-#TODO .. Important::
-#TODO    - Wash behind your ears.
-#TODO    - Clean up your room.
-#TODO    - Call your mother.
-#TODO    - Back up your data.
-#TODO """,
-#TODO """\
-#TODO <document source="test data">
-#TODO     <attention>
-#TODO         <paragraph>
-#TODO             Directives at large.
-#TODO     <note classes="testnote" ids="mynote" names="mynote">
-#TODO         <paragraph>
-#TODO             Admonitions support the generic "name" and "class" options.
-#TODO     <tip>
-#TODO         <paragraph>
-#TODO             15% if the
-#TODO             service is good.
-#TODO     <hint>
-#TODO         <paragraph>
-#TODO             It's bigger than a bread box.
-#TODO     <bullet_list bullet="-">
-#TODO         <list_item>
-#TODO             <warning>
-#TODO                 <paragraph>
-#TODO                     Strong prose may provoke extreme mental exertion.
-#TODO                     Reader discretion is strongly advised.
-#TODO         <list_item>
-#TODO             <error>
-#TODO                 <paragraph>
-#TODO                     Does not compute.
-#TODO     <caution>
-#TODO         <paragraph>
-#TODO             Don't take any wooden nickels.
-#TODO     <danger>
-#TODO         <paragraph>
-#TODO             Mad scientist at work!
-#TODO     <important>
-#TODO         <bullet_list bullet="-">
-#TODO             <list_item>
-#TODO                 <paragraph>
-#TODO                     Wash behind your ears.
-#TODO             <list_item>
-#TODO                 <paragraph>
-#TODO                     Clean up your room.
-#TODO             <list_item>
-#TODO                 <paragraph>
-#TODO                     Call your mother.
-#TODO             <list_item>
-#TODO                 <paragraph>
-#TODO                     Back up your data.
-#TODO """],
+["""\
+.. note::
+   :name: some name
+
+   Some text.
+""",
+"""\
+.. note::
+   :name: some name
+
+   Some text.
+"""],
+["""\
+.. note::
+   :class: some class
+
+   Some text.
+""",
+"""\
+.. note::
+   :class: some class
+
+   Some text.
+"""],
+["""\
+.. note::
+   :name: some name
+   :class: some class
+
+   Some text.
+""",
+"""\
+.. note::
+   :name: some name
+   :class: some class
+
+   Some text.
+"""],
+["""\
+.. note::
+   :class: some class
+   :name: some name
+
+   The output will have "name" first, then "class".
+""",
+"""\
+.. note::
+   :name: some name
+   :class: some class
+
+   The output will have "name" first, then "class".
+"""],
+["""\
+.. note:: This text will be moved after attribute defs.
+   :name: some name
+   :class: some class
+""",
+"""\
+.. note::
+   :name: some name
+   :class: some class
+
+   This text will be moved after attribute defs.
+"""],
+["""\
+.. note:: This text will be moved
+   after attribute defs.
+   :name: some name
+   :class: some class
+""",
+"""\
+.. note::
+   :name: some name
+   :class: some class
+
+   This text will be moved
+   after attribute defs.
+"""],
+["""\
+.. Attention:: Directives at large.
+
+.. Note:: :name: mynote
+   :class: testnote
+
+   Admonitions support the generic "name" and "class" options.
+
+.. Tip:: 15% if the
+   service is good.
+
+.. Hint:: It's bigger than a bread box.
+
+- .. WARNING:: Strong prose may provoke extreme mental exertion.
+     Reader discretion is strongly advised.
+- .. Error:: Does not compute.
+
+.. Caution::
+
+   Don't take any wooden nickels.
+
+.. DANGER:: Mad scientist at work!
+
+.. Important::
+   - Wash behind your ears.
+   - Clean up your room.
+   - Call your mother.
+   - Back up your data.
+""",
+"""\
+.. attention:: Directives at large.
+
+.. note::
+   :name: mynote
+   :class: testnote
+
+   Admonitions support the generic "name" and "class" options.
+
+.. tip:: 15% if the
+   service is good.
+
+.. hint:: It's bigger than a bread box.
+
+- .. warning:: Strong prose may provoke extreme mental exertion.
+     Reader discretion is strongly advised.
+- .. error:: Does not compute.
+
+.. caution:: Don't take any wooden nickels.
+
+.. danger:: Mad scientist at work!
+
+.. important::
+   - Wash behind your ears.
+   - Clean up your room.
+   - Call your mother.
+   - Back up your data.
+"""],
 ["""\
 .. note:: One-line notes.
 .. note:: One after the other.
@@ -250,6 +338,28 @@ totest['admonitions'] = [
 .. note:: One after the other.
 
 .. note:: No blank lines in-between.
+"""],
+["""\
+Testing admonitions in other environments.
+
+  .. note:: note in a block quote
+
+- .. note:: note in a list item
+
++------------------------------+
+| .. note:: note in a table    |
++------------------------------+
+""",
+"""\
+Testing admonitions in other environments.
+
+  .. note:: note in a block quote
+
+- .. note:: note in a list item
+
++------------------------------+
+| .. note:: note in a table    |
++------------------------------+
 """],
 #TODO ["""\
 #TODO .. note:: Content before options
@@ -323,37 +433,27 @@ totest['admonitions'] = [
    Admonition 2nd multi
    line paragraph.
 """],
-#TODO ["""\
-#TODO .. admonition:: Admonition
-#TODO    :class: emergency
-#TODO    :name: reference name
-#TODO 
-#TODO    Test the "class" override.
-#TODO """,
-#TODO """\
-#TODO <document source="test data">
-#TODO     <admonition classes="emergency" ids="reference-name" names="reference\\ name">
-#TODO         <title>
-#TODO             Admonition
-#TODO         <paragraph>
-#TODO             Test the "class" override.
-#TODO """],
-#TODO ["""\
-#TODO .. admonition::
-#TODO 
-#TODO    Generic admonitions require a title.
-#TODO """,
-#TODO """\
-#TODO <document source="test data">
-#TODO     <system_message level="3" line="1" source="test data" type="ERROR">
-#TODO         <paragraph>
-#TODO             Error in "admonition" directive:
-#TODO             1 argument(s) required, 0 supplied.
-#TODO         <literal_block xml:space="preserve">
-#TODO             .. admonition::
-#TODO             
-#TODO                Generic admonitions require a title.
-#TODO """],
+["""\
+.. admonition:: Admonition
+   :class: emergency
+   :name: reference name
+
+   Test the "class" override.
+""",
+"""\
+.. admonition:: Admonition
+   :name: reference name
+   :class: emergency
+
+   Test the "class" override.
+"""],
+["""\
+.. admonition::
+
+   Generic admonitions require a title.
+""",
+"""\
+"""],
 ]
 
 
