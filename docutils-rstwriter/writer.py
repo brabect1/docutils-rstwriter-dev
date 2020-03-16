@@ -684,10 +684,15 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
         self.tstack += self.vindent() + Writer.get_indent(node.parent)
         self.tstack += ".. " + node.__class__.__name__ + '::'
 
-    image_attr_map = {
-            'names': 'name',
-            'classes': 'class'
-            };
+    image_attr_map = [
+            ('names', 'name'),
+            ('classes', 'class'),
+            ('width', 'width'),
+            ('height', 'height'),
+            ('scale', 'scale'),
+            ('alt', 'alt'),
+            ('align', 'align')
+            ];
 
     def visit_image(self, node):
         p = node.parent
@@ -698,14 +703,14 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
                 + node['uri'] + '\n'
 
         indent = Writer.get_indent(node)
-        for (k,v) in RstCollectVisitor.image_attr_map.items():
+        for (k,v) in RstCollectVisitor.image_attr_map:
             if k in node:
                 val = node[k]
                 if isinstance(val,list) and len(val) == 0:
                     continue
-                self.tstack += indent + ':' + v + ': '
-                if isinstance(val,list):
-                    self.tstack += ' '.join(val)
-                else:
-                    self.tstack += val
+                self.tstack += indent + ':' + v + ':'
+                if isinstance(val,list) and len(val) > 0:
+                    self.tstack += ' ' + ' '.join(val)
+                elif str(val):
+                    self.tstack += ' ' + str(val)
                 self.tstack += '\n'
