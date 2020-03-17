@@ -300,6 +300,30 @@ class Writer(writers.Writer):
 
             return s
 
+    @classmethod
+    def get_refids(cls, document):
+        if not document or not isinstance(document, nodes.document):
+            return {}
+        else:
+            ids = {}
+            for node in document.traverse():
+                if 'ids' in node:
+                    assert 'names' in node
+                    if len(node['names']) > 0:
+                        assert len(node['ids']) == len(node['names'])
+                        #name = '???'
+                        #if 'names' in node: name = ''.join(node['names'])
+                        #for refid in node['ids']:
+                        #    ids[refid] = name
+                        for refid, name in zip(node['ids'], node['names']):
+                            ids[refid] = name
+                    else:
+                        assert 'dupnames' in node
+                        assert len(node['ids']) == len(node['dupnames'])
+                        for refid, name in zip(node['ids'], node['dupnames']):
+                            ids[refid] = name
+            return ids
+
     def abc(self):
         for i in self.document.traverse():
             if isinstance(i, nodes.title):
@@ -340,6 +364,7 @@ class Writer(writers.Writer):
 class RstCollectVisitor(nodes.SparseNodeVisitor):
 
     def __init__(self, document, options):
+        self.document = document
         self.options = options
         self.tstack = ''
         self.text = ''
@@ -347,6 +372,7 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
         self.table = []
         self.table_rowcells = []
         self.table_tstacks = []
+        self.ref_ids = None
         nodes.SparseNodeVisitor.__init__(self, document)
 
     def vindent(self):
@@ -531,13 +557,31 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
             self.tstack += '_'
 
     def visit_target(self, node):
+        if not self.ref_ids:
+            self.ref_ids = Writer.get_refids(self.document)
+            #TODO for (k,v) in self.ref_ids.items():
+            #TODO     print '>> ' + k + ' = ' + v
+
         if len(node.children) > 0:
             self.tstack += '_`'
         else:
             #if not ('refuri' in node or 'refid' in node or 'refname' in node): # indirect target ???
-            if isinstance(node.parent, nodes.document):
+            p = node.parent
+            if isinstance(p, nodes.document) or isinstance(p, nodes.section):
+                if 'refid' in node:
+                    refid = node['refid']
+                    assert refid in self.ref_ids
+                    name = self.ref_ids[refid]
+                else:
+                    assert 'names' in node
+                    if len(node['names']) > 0:
+                        name = node['names'][0]
+                    else:
+                        assert 'dupnames' in node
+                        name = node['dupnames'][0]
+
                 self.tstack += self.vindent() + Writer.get_indent(node.parent) + ".. "
-                self.tstack += ''.join(node['names']) + ":"
+                self.tstack += '_' + name + ":"
                 if 'refuri' in node:
                     self.tstack += " " + node['refuri']
                 self.tstack += "\n"
