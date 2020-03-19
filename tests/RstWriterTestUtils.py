@@ -290,7 +290,9 @@ class WriterPublishTestCase(CustomTestCase, docutils.SettingsSpec):
     """
 
     settings_default_overrides = {'_disable_config': True,
-                                  'strict_visitor': True}
+                                  'strict_visitor': True,
+                                  #TODO 'halt_level': 5,
+                                  'report_level': 5}
     writer_name = '' # set in subclasses or constructor
 
     def __init__(self, *args, **kwargs):
