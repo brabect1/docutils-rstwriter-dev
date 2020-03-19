@@ -71,50 +71,43 @@ External hyperlink targets:
 
 .. _not-indirect: uri_
 """],
-#TODO ["""\
-#TODO Indirect hyperlink targets:
-#TODO 
-#TODO .. _target1: reference_
-#TODO 
-#TODO .. _target2: `phrase-link reference`_
-#TODO """,
-#TODO """\
-#TODO <document source="test data">
-#TODO     <paragraph>
-#TODO         Indirect hyperlink targets:
-#TODO     <target ids="target1" names="target1" refname="reference">
-#TODO     <target ids="target2" names="target2" refname="phrase-link reference">
-#TODO """],
-#TODO ["""\
-#TODO .. _a long target name:
-#TODO 
-#TODO .. _`a target name: including a colon (quoted)`:
-#TODO 
-#TODO .. _a target name\\: including a colon (escaped):
-#TODO """,
-#TODO """\
-#TODO <document source="test data">
-#TODO     <target ids="a-long-target-name" names="a\\ long\\ target\\ name">
-#TODO     <target ids="a-target-name-including-a-colon-quoted" names="a\\ target\\ name:\\ including\\ a\\ colon\\ (quoted)">
-#TODO     <target ids="a-target-name-including-a-colon-escaped" names="a\\ target\\ name:\\ including\\ a\\ colon\\ (escaped)">
-#TODO """],
-#TODO ["""\
-#TODO .. _`target: No matching backquote.
-#TODO .. _`: No matching backquote either.
-#TODO """,
-#TODO """\
-#TODO <document source="test data">
-#TODO     <comment xml:space="preserve">
-#TODO         _`target: No matching backquote.
-#TODO     <system_message level="2" line="1" source="test data" type="WARNING">
-#TODO         <paragraph>
-#TODO             malformed hyperlink target.
-#TODO     <comment xml:space="preserve">
-#TODO         _`: No matching backquote either.
-#TODO     <system_message level="2" line="2" source="test data" type="WARNING">
-#TODO         <paragraph>
-#TODO             malformed hyperlink target.
-#TODO """],
+["""\
+Indirect hyperlink targets:
+
+.. _target1: reference_
+
+.. _target2: `phrase-link reference`_
+""",
+"""\
+Indirect hyperlink targets:
+
+.. _target1: reference_
+
+.. _target2: `phrase-link reference`_
+"""],
+["""\
+.. _a long target name:
+
+.. _`a target name: including a colon (quoted)`:
+
+.. _a target name\\: including a colon (escaped):
+""",
+"""\
+.. _a long target name:
+
+.. _a target name\\: including a colon (quoted):
+
+.. _a target name\\: including a colon (escaped):
+"""],
+["""\
+.. _`target: No matching backquote.
+.. _`: No matching backquote either.
+""",
+"""\
+.. _`target: No matching backquote.
+
+.. _`: No matching backquote either.
+"""],
 ["""\
 .. _a very long target name,
    split across lines:
@@ -147,28 +140,28 @@ External hyperlink:
 
 .. _multi-line email: mailto:jdoe@example.com
 """],
-#TODO ["""\
-#TODO Malformed target:
-#TODO 
-#TODO .. __malformed: no good
-#TODO 
-#TODO Target beginning with an underscore:
-#TODO 
-#TODO .. _`_target`: OK
-#TODO """,
-#TODO """\
-#TODO <document source="test data">
-#TODO     <paragraph>
-#TODO         Malformed target:
-#TODO     <comment xml:space="preserve">
-#TODO         __malformed: no good
-#TODO     <system_message level="2" line="3" source="test data" type="WARNING">
-#TODO         <paragraph>
-#TODO             malformed hyperlink target.
-#TODO     <paragraph>
-#TODO         Target beginning with an underscore:
-#TODO     <target ids="target" names="_target" refuri="OK">
-#TODO """],
+["""\
+Malformed target:
+
+.. __malformed: no good
+
+Target beginning with an underscore:
+
+.. _`_target`: OK
+
+.. _\_target2`: OK
+""",
+"""\
+Malformed target:
+
+.. __malformed: no good
+
+Target beginning with an underscore:
+
+.. _\_target: OK
+
+.. _\_target2`: OK
+"""],
 ["""\
 Duplicate external targets (different URIs):
 
@@ -413,112 +406,108 @@ Paragraph.
 ]
 
 totest['anonymous_targets'] = [
-#TODO ["""\
-#TODO Anonymous external hyperlink target:
-#TODO 
-#TODO .. __: http://w3c.org/
-#TODO """,
-#TODO """\
-#TODO Anonymous external hyperlink target:
-#TODO 
-#TODO .. __: http://w3c.org/
-#TODO """],
-#TODO ["""\
-#TODO Anonymous external hyperlink target:
-#TODO 
-#TODO __ http://w3c.org/
-#TODO """,
-#TODO """\
-#TODO <document source="test data">
-#TODO     <paragraph>
-#TODO         Anonymous external hyperlink target:
-#TODO     <target anonymous="1" ids="id1" refuri="http://w3c.org/">
-#TODO """],
-#TODO ["""\
-#TODO Anonymous indirect hyperlink target:
-#TODO 
-#TODO .. __: reference_
-#TODO """,
-#TODO """\
-#TODO <document source="test data">
-#TODO     <paragraph>
-#TODO         Anonymous indirect hyperlink target:
-#TODO     <target anonymous="1" ids="id1" refname="reference">
-#TODO """],
-#TODO ["""\
-#TODO Anonymous external hyperlink target, not indirect:
-#TODO 
-#TODO __ uri\\_
-#TODO 
-#TODO __ this URI ends with an underscore_
-#TODO """,
-#TODO """\
-#TODO <document source="test data">
-#TODO     <paragraph>
-#TODO         Anonymous external hyperlink target, not indirect:
-#TODO     <target anonymous="1" ids="id1" refuri="uri_">
-#TODO     <target anonymous="1" ids="id2" refuri="thisURIendswithanunderscore_">
-#TODO """],
-#TODO ["""\
-#TODO Anonymous indirect hyperlink targets:
-#TODO 
-#TODO __ reference_
-#TODO __ `a very long
-#TODO    reference`_
-#TODO """,
-#TODO """\
-#TODO <document source="test data">
-#TODO     <paragraph>
-#TODO         Anonymous indirect hyperlink targets:
-#TODO     <target anonymous="1" ids="id1" refname="reference">
-#TODO     <target anonymous="1" ids="id2" refname="a very long reference">
-#TODO """],
-#TODO ["""\
-#TODO Mixed anonymous & named indirect hyperlink targets:
-#TODO 
-#TODO __ reference_
-#TODO .. __: reference_
-#TODO __ reference_
-#TODO .. _target1: reference_
-#TODO no blank line
-#TODO 
-#TODO .. _target2: reference_
-#TODO __ reference_
-#TODO .. __: reference_
-#TODO __ reference_
-#TODO no blank line
-#TODO """,
-#TODO """\
-#TODO <document source="test data">
-#TODO     <paragraph>
-#TODO         Mixed anonymous & named indirect hyperlink targets:
-#TODO     <target anonymous="1" ids="id1" refname="reference">
-#TODO     <target anonymous="1" ids="id2" refname="reference">
-#TODO     <target anonymous="1" ids="id3" refname="reference">
-#TODO     <target ids="target1" names="target1" refname="reference">
-#TODO     <system_message level="2" line="7" source="test data" type="WARNING">
-#TODO         <paragraph>
-#TODO             Explicit markup ends without a blank line; unexpected unindent.
-#TODO     <paragraph>
-#TODO         no blank line
-#TODO     <target ids="target2" names="target2" refname="reference">
-#TODO     <target anonymous="1" ids="id4" refname="reference">
-#TODO     <target anonymous="1" ids="id5" refname="reference">
-#TODO     <target anonymous="1" ids="id6" refname="reference">
-#TODO     <system_message level="2" line="13" source="test data" type="WARNING">
-#TODO         <paragraph>
-#TODO             Explicit markup ends without a blank line; unexpected unindent.
-#TODO     <paragraph>
-#TODO         no blank line
-#TODO """],
-#TODO ["""\
-#TODO .. _
-#TODO """,
-#TODO """\
-#TODO <document source="test data">
-#TODO     <comment xml:space="preserve">
-#TODO         _
-#TODO """],
+["""\
+Anonymous external hyperlink target:
+
+.. __: http://w3c.org/
+""",
+"""\
+Anonymous external hyperlink target:
+
+.. __: http://w3c.org/
+"""],
+["""\
+Anonymous external hyperlink target:
+
+__ http://w3c.org/
+""",
+"""\
+Anonymous external hyperlink target:
+
+.. __: http://w3c.org/
+"""],
+["""\
+Anonymous indirect hyperlink target:
+
+.. __: reference_
+""",
+"""\
+Anonymous indirect hyperlink target:
+
+.. __: reference_
+"""],
+["""\
+Anonymous external hyperlink target, not indirect:
+
+__ uri\\_
+
+__ this URI ends with an underscore_
+""",
+"""\
+Anonymous external hyperlink target, not indirect:
+
+.. __: uri_
+
+.. __: thisURIendswithanunderscore_
+"""],
+["""\
+Anonymous indirect hyperlink targets:
+
+__ reference_
+__ `a very long
+   reference`_
+""",
+"""\
+Anonymous indirect hyperlink targets:
+
+.. __: reference_
+
+.. __: `a very long reference`_
+"""],
+["""\
+Mixed anonymous & named indirect hyperlink targets:
+
+__ reference_
+.. __: reference_
+__ reference_
+.. _target1: reference_
+no blank line
+
+.. _target2: reference_
+__ reference_
+.. __: reference_
+__ reference_
+no blank line
+""",
+"""\
+Mixed anonymous & named indirect hyperlink targets:
+
+.. __: reference_
+
+.. __: reference_
+
+.. __: reference_
+
+.. _target1: reference_
+
+no blank line
+
+.. _target2: reference_
+
+.. __: reference_
+
+.. __: reference_
+
+.. __: reference_
+
+no blank line
+"""],
+["""\
+.. _
+""",
+"""\
+.. _
+"""],
 ]
 
 

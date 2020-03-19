@@ -308,19 +308,24 @@ class Writer(writers.Writer):
             ids = {}
             for node in document.traverse():
                 if 'ids' in node:
-                    assert 'names' in node
-                    if len(node['names']) > 0:
-                        assert len(node['ids']) == len(node['names'])
-                        #name = '???'
-                        #if 'names' in node: name = ''.join(node['names'])
-                        #for refid in node['ids']:
-                        #    ids[refid] = name
-                        for refid, name in zip(node['ids'], node['names']):
-                            ids[refid] = name
+                    if isinstance(node, nodes.system_message):
+                        continue
+
+                    #if 'anonymous' in node and node['anonymous']==1:
+                    if 'anonymous' in node:
+                        for refid in node['ids']:
+                            ids[refid] = None
                     else:
-                        assert 'dupnames' in node
-                        assert len(node['ids']) == len(node['dupnames'])
-                        for refid, name in zip(node['ids'], node['dupnames']):
+                        assert 'names' in node
+                        if len(node['names']) > 0:
+                            assert len(node['ids']) == len(node['names'])
+                            names = 'names'
+                        else:
+                            assert 'dupnames' in node
+                            assert len(node['ids']) == len(node['dupnames'])
+                            names = 'dupnames'
+
+                        for refid, name in zip(node['ids'], node[names]):
                             ids[refid] = name
             return ids
 
@@ -556,6 +561,11 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
         else:
             self.tstack += '_'
 
+    target_name_escapes = [
+            ('\\', '\\\\'),
+            (':', '\\:'),
+            ]
+
     def visit_target(self, node):
         if not self.ref_ids:
             self.ref_ids = Writer.get_refids(self.document)
@@ -573,17 +583,31 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
                     assert refid in self.ref_ids
                     name = self.ref_ids[refid]
                 else:
-                    assert 'names' in node
-                    if len(node['names']) > 0:
-                        name = node['names'][0]
+                    #if 'anonymous' in node and node['anonymous']==1:
+                    if 'anonymous' in node:
+                        name = '_'
                     else:
-                        assert 'dupnames' in node
-                        name = node['dupnames'][0]
+                        assert 'names' in node
+                        if len(node['names']) > 0:
+                            name = node['names'][0]
+                        else:
+                            assert 'dupnames' in node
+                            name = node['dupnames'][0]
+
+                for (k,v) in RstCollectVisitor.target_name_escapes:
+                    if k in name: name = name.replace(k,v);
+
+                if name != '_' and name[0]=='_': name = '\\'+name
 
                 self.tstack += self.vindent() + Writer.get_indent(node.parent) + ".. "
                 self.tstack += '_' + name + ":"
                 if 'refuri' in node:
                     self.tstack += " " + node['refuri']
+                elif 'refname' in node:
+                    refname = node['refname']
+                    if len(refname.split()) > 1:
+                        refname = '`' + refname + '`'
+                    self.tstack += " " + refname + '_'
                 self.tstack += "\n"
 
     def depart_target(self, node):
