@@ -297,6 +297,8 @@ class Writer(writers.Writer):
                 s += "   "
             elif isinstance(node, nodes.image):
                 s += "   "
+            elif isinstance(node, nodes.footnote):
+                s += "   "
 
             return s
 
@@ -423,6 +425,8 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
                       lines.append(' '+line)
                   elif isinstance(pe, nodes.paragraph) and isinstance(pe.parent, nodes.Admonition) and pe.parent.index(pe)==0:
                       lines.append(' '+line)
+                  elif isinstance(pe, nodes.paragraph) and isinstance(pe.parent, nodes.footnote) and pe.parent.index(pe)==1:
+                      lines.append(' '+line)
                   elif isinstance(pe, nodes.title) and isinstance(pe.parent, nodes.admonition):
                       lines.append(' '+line)
                   elif isinstance(pe, nodes.attribution):
@@ -515,13 +519,16 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
 
     def visit_paragraph(self, node):
         p = node.parent
-        if not (isinstance(p, nodes.list_item) or isinstance(p, nodes.field_body) or isinstance(p, nodes.Admonition)):
+        if not (isinstance(p, nodes.list_item) or isinstance(p, nodes.field_body) or isinstance(p, nodes.Admonition) or isinstance(p, nodes.footnote)):
             # For all but a paragraph in certain elements add a vertical space
             # before the paragraph. The special elements are:
             # - list_item's
             # - field_body's
+            # - admonitions
+            # - footnotes
             self.tstack += self.vindent()
-        elif p.index(node) != 0:
+        elif p.index(node) != 0 and \
+                not (p.index(node) == 1 and isinstance(p, nodes.footnote)):
             # For 2nd+ paragraph in a list item we need to add a vertical
             # space.
             self.tstack += self.vindent()
@@ -782,3 +789,34 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
                 elif str(val):
                     self.tstack += ' ' + str(val)
                 self.tstack += '\n'
+
+    def visit_label(self, node):
+        p = node.parent
+        if isinstance(p, nodes.footnote):
+            # `label` used with footnotes is presently ignored
+            # (we take the ft. label from its `names` attribute)
+            raise nodes.SkipChildren()
+        else:
+            pass
+
+    def depart_footnote(self, node):
+        if len(node.children) == 1:
+            # There is no body of the footnote, so we need to add
+            # newline.
+            self.tstack += '\n'
+
+    def visit_footnote(self, node):
+        if 'auto' in node and (node['auto']==1 or node['auto']=='*'):
+            if node['auto']==1: ft = '#'
+            else:               ft = '*'
+        else:
+            assert 'names' in node and len(node['names']) > 0
+            ft = node['names'][0]
+
+        p = node.parent
+        pidx = p.index(node)
+        if not isinstance(p, nodes.list_item) and \
+                not (pidx > 0 and isinstance(p[pidx-1], nodes.footnote)):
+            self.tstack += self.vindent()
+        self.tstack += Writer.get_indent(node.parent)
+        self.tstack += '.. [' + ft + ']'
