@@ -28,7 +28,17 @@ parser = rst.Parser()
 #parser = parser_class()
 
 reader_class = docutils.readers.get_reader_class('standalone')
-reader =reader_class()
+reader = reader_class()
+
+writer_class = docutils.writers.get_writer_class('docutils-rstwriter')
+writer = writer_class()
+
+print "-------------------transforms"
+for c in [parser, reader, writer]:
+    print '['+c.__class__.__name__+']'
+    for t in c.get_transforms():
+        print '  '+str(t)
+
 
 option_parser = frontend.OptionParser(components=(rst.Parser,))
 
@@ -40,22 +50,31 @@ settings.halt_level = 5
 ##settings.debug = package_unittest.debug
 
 ##settings.__dict__.update(self.suite_settings)
-print settings._source
 source = io.FileInput(source=None, source_path=settings._source, encoding=settings.input_encoding)
 input = source.read()
-print "-------------------"
-print input
-print "-------------------"
-
-document = utils.new_document('test data', settings)
-
 #input = """\
 #ref_
 #"""
 
-#parser.parse(input, document)
-#print document.pformat()
+print "-------------------input " + settings._source
+print input
 
+
+print "-------------------pformat"
+document = utils.new_document('test data', settings)
+parser.parse(input, document)
+print document.pformat()
+
+print "-------------------writer"
+destination = io.FileOutput(
+    destination=None, destination_path=settings._destination,
+    encoding=settings.output_encoding,
+    error_handler=settings.output_encoding_error_handler)
+output = writer.write(document, destination)
+
+print "-------------------publish_cmdline"
 publish_cmdline(description=description, parser=parser, reader=reader, settings=settings)
 #publish_cmdline(description=description)
+
+print "-------------------"
 
