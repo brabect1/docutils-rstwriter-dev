@@ -20,7 +20,8 @@ import docutils
 import docutils.core
 
 def suite():
-    s = RstWriterTestUtils.PublishTestSuite(writer_name='docutils-rstwriter')
+    s = RstWriterTestUtils.PublishTestSuite(writer_name='docutils-rstwriter',
+            test_class=RstWriterTestUtils.WriterNoTransformTestCase)
     s.generateTests(totest)
     return s
 
@@ -295,542 +296,338 @@ ref_
 """\
 ref_
 """],
-#TODO [u"""\
-#TODO l'ref_ and l\u2019ref_ with apostrophe
-#TODO """,
-#TODO u"""\
-#TODO <document source="test data">
-#TODO     <paragraph>
-#TODO         l'
-#TODO         <reference name="ref" refname="ref">
-#TODO             ref
-#TODO          and l\u2019
-#TODO         <reference name="ref" refname="ref">
-#TODO             ref
-#TODO          with apostrophe
-#TODO """],
-#TODO [u"""\
-#TODO quoted 'ref_', quoted "ref_",
-#TODO quoted \u2018ref_\u2019, quoted \u201cref_\u201d,
-#TODO quoted \xabref_\xbb,
-#TODO but not 'ref ref'_, "ref ref"_, \u2018ref ref\u2019_,
-#TODO \u201cref ref\u201d_, or \xabref ref\xbb_
-#TODO """,
-#TODO u"""\
-#TODO <document source="test data">
-#TODO     <paragraph>
-#TODO         quoted '
-#TODO         <reference name="ref" refname="ref">
-#TODO             ref
-#TODO         ', quoted "
-#TODO         <reference name="ref" refname="ref">
-#TODO             ref
-#TODO         ",
-#TODO         quoted \u2018
-#TODO         <reference name="ref" refname="ref">
-#TODO             ref
-#TODO         \u2019, quoted \u201c
-#TODO         <reference name="ref" refname="ref">
-#TODO             ref
-#TODO         \u201d,
-#TODO         quoted \xab
-#TODO         <reference name="ref" refname="ref">
-#TODO             ref
-#TODO         \xbb,
-#TODO         but not 'ref ref'_, "ref ref"_, \u2018ref ref\u2019_,
-#TODO         \u201cref ref\u201d_, or \xabref ref\xbb_
-#TODO """],
+[u"""\
+l'ref_ and l\u2019ref_ with apostrophe
+""",
+u"""\
+l'ref_ and l\u2019ref_ with apostrophe
+"""],
+[u"""\
+quoted 'ref_', quoted "ref_",
+quoted \u2018ref_\u2019, quoted \u201cref_\u201d,
+quoted \xabref_\xbb,
+but not 'ref ref'_, "ref ref"_, \u2018ref ref\u2019_,
+\u201cref ref\u201d_, or \xabref ref\xbb_
+""",
+u"""\
+quoted 'ref_', quoted "ref_",
+quoted \u2018ref_\u2019, quoted \u201cref_\u201d,
+quoted \xabref_\xbb,
+but not 'ref ref'_, "ref ref"_, \u2018ref ref\u2019_,
+\u201cref ref\u201d_, or \xabref ref\xbb_
+"""],
 ["""\
 ref__
 """,
 """\
-ref_
+ref__
 """],
-#TODO [u"""\
-#TODO l'ref__ and l\u2019ref__ with apostrophe
-#TODO """,
-#TODO u"""\
-#TODO <document source="test data">
-#TODO     <paragraph>
-#TODO         l'
-#TODO         <reference anonymous="1" name="ref">
-#TODO             ref
-#TODO          and l\u2019
-#TODO         <reference anonymous="1" name="ref">
-#TODO             ref
-#TODO          with apostrophe
-#TODO """],
-#TODO [u"""\
-#TODO quoted 'ref__', quoted "ref__",
-#TODO quoted \u2018ref__\u2019, quoted \u201cref__\u201d,
-#TODO quoted \xabref__\xbb,
-#TODO but not 'ref ref'__, "ref ref"__, \u2018ref ref\u2019__,
-#TODO \u201cref ref\u201d__, or \xabref ref\xbb__
-#TODO """,
-#TODO u"""\
-#TODO <document source="test data">
-#TODO     <paragraph>
-#TODO         quoted '
-#TODO         <reference anonymous="1" name="ref">
-#TODO             ref
-#TODO         ', quoted "
-#TODO         <reference anonymous="1" name="ref">
-#TODO             ref
-#TODO         ",
-#TODO         quoted \u2018
-#TODO         <reference anonymous="1" name="ref">
-#TODO             ref
-#TODO         \u2019, quoted \u201c
-#TODO         <reference anonymous="1" name="ref">
-#TODO             ref
-#TODO         \u201d,
-#TODO         quoted \xab
-#TODO         <reference anonymous="1" name="ref">
-#TODO             ref
-#TODO         \xbb,
-#TODO         but not 'ref ref'__, "ref ref"__, \u2018ref ref\u2019__,
-#TODO         \u201cref ref\u201d__, or \xabref ref\xbb__
-#TODO """],
-#TODO ["""\
-#TODO ref_, r_, r_e-f_, -ref_, and anonymousref__,
-#TODO but not _ref_ or __attr__ or object.__attr__
-#TODO """,
-#TODO """\
-#TODO <document source="test data">
-#TODO     <paragraph>
-#TODO         <reference name="ref" refname="ref">
-#TODO             ref
-#TODO         , \n\
-#TODO         <reference name="r" refname="r">
-#TODO             r
-#TODO         , \n\
-#TODO         <reference name="r_e-f" refname="r_e-f">
-#TODO             r_e-f
-#TODO         , -
-#TODO         <reference name="ref" refname="ref">
-#TODO             ref
-#TODO         , and \n\
-#TODO         <reference anonymous="1" name="anonymousref">
-#TODO             anonymousref
-#TODO         ,
-#TODO         but not _ref_ or __attr__ or object.__attr__
-#TODO """],
+[u"""\
+l'ref__ and l\u2019ref__ with apostrophe
+""",
+u"""\
+l'ref__ and l\u2019ref__ with apostrophe
+"""],
+[u"""\
+quoted 'ref__', quoted "ref__",
+quoted \u2018ref__\u2019, quoted \u201cref__\u201d,
+quoted \xabref__\xbb,
+but not 'ref ref'__, "ref ref"__, \u2018ref ref\u2019__,
+\u201cref ref\u201d__, or \xabref ref\xbb__
+""",
+u"""\
+quoted 'ref__', quoted "ref__",
+quoted \u2018ref__\u2019, quoted \u201cref__\u201d,
+quoted \xabref__\xbb,
+but not 'ref ref'__, "ref ref"__, \u2018ref ref\u2019__,
+\u201cref ref\u201d__, or \xabref ref\xbb__
+"""],
+["""\
+ref_, r_, r_e-f_, -ref_, and anonymousref__,
+but not _ref_ or __attr__ or object.__attr__
+""",
+"""\
+ref_, r_, r_e-f_, -ref_, and anonymousref__,
+but not _ref_ or __attr__ or object.__attr__
+"""],
 ]
 
-#TODO totest['phrase_references'] = [
-#TODO ["""\
-#TODO `phrase reference`_
-#TODO """,
-#TODO """\
-#TODO <document source="test data">
-#TODO     <paragraph>
-#TODO         <reference name="phrase reference" refname="phrase reference">
-#TODO             phrase reference
-#TODO """],
-#TODO [u"""\
-#TODO l'`phrase reference`_ and l\u2019`phrase reference`_ with apostrophe
-#TODO """,
-#TODO u"""\
-#TODO <document source="test data">
-#TODO     <paragraph>
-#TODO         l'
-#TODO         <reference name="phrase reference" refname="phrase reference">
-#TODO             phrase reference
-#TODO          and l\u2019
-#TODO         <reference name="phrase reference" refname="phrase reference">
-#TODO             phrase reference
-#TODO          with apostrophe
-#TODO """],
-#TODO [u"""\
-#TODO quoted '`phrase reference`_', quoted "`phrase reference`_",
-#TODO quoted \u2018`phrase reference`_\u2019,
-#TODO quoted \u201c`phrase reference`_\u201d,
-#TODO quoted \xab`phrase reference`_\xbb
-#TODO """,
-#TODO u"""\
-#TODO <document source="test data">
-#TODO     <paragraph>
-#TODO         quoted '
-#TODO         <reference name="phrase reference" refname="phrase reference">
-#TODO             phrase reference
-#TODO         ', quoted "
-#TODO         <reference name="phrase reference" refname="phrase reference">
-#TODO             phrase reference
-#TODO         ",
-#TODO         quoted \u2018
-#TODO         <reference name="phrase reference" refname="phrase reference">
-#TODO             phrase reference
-#TODO         \u2019,
-#TODO         quoted \u201c
-#TODO         <reference name="phrase reference" refname="phrase reference">
-#TODO             phrase reference
-#TODO         \u201d,
-#TODO         quoted \xab
-#TODO         <reference name="phrase reference" refname="phrase reference">
-#TODO             phrase reference
-#TODO         \xbb
-#TODO """],
-#TODO [u"""\
-#TODO `'phrase reference'`_ with quotes, `"phrase reference"`_ with quotes,
-#TODO `\u2018phrase reference\u2019`_ with quotes,
-#TODO `\u201cphrase reference\u201d`_ with quotes,
-#TODO `\xabphrase reference\xbb`_ with quotes
-#TODO """,
-#TODO u"""\
-#TODO <document source="test data">
-#TODO     <paragraph>
-#TODO         <reference name="'phrase reference'" refname="'phrase reference'">
-#TODO             'phrase reference'
-#TODO          with quotes, \n\
-#TODO         <reference name=""phrase reference"" refname=""phrase reference"">
-#TODO             "phrase reference"
-#TODO          with quotes,
-#TODO         <reference name="\u2018phrase reference\u2019" refname="\u2018phrase reference\u2019">
-#TODO             \u2018phrase reference\u2019
-#TODO          with quotes,
-#TODO         <reference name="\u201cphrase reference\u201d" refname="\u201cphrase reference\u201d">
-#TODO             \u201cphrase reference\u201d
-#TODO          with quotes,
-#TODO         <reference name="\xabphrase reference\xbb" refname="\xabphrase reference\xbb">
-#TODO             \xabphrase reference\xbb
-#TODO          with quotes
-#TODO """],
-#TODO ["""\
-#TODO `anonymous reference`__
-#TODO """,
-#TODO """\
-#TODO <document source="test data">
-#TODO     <paragraph>
-#TODO         <reference anonymous="1" name="anonymous reference">
-#TODO             anonymous reference
-#TODO """],
-#TODO [u"""\
-#TODO l'`anonymous reference`__ and l\u2019`anonymous reference`__ with apostrophe
-#TODO """,
-#TODO u"""\
-#TODO <document source="test data">
-#TODO     <paragraph>
-#TODO         l'
-#TODO         <reference anonymous="1" name="anonymous reference">
-#TODO             anonymous reference
-#TODO          and l\u2019
-#TODO         <reference anonymous="1" name="anonymous reference">
-#TODO             anonymous reference
-#TODO          with apostrophe
-#TODO """],
-#TODO [u"""\
-#TODO quoted '`anonymous reference`__', quoted "`anonymous reference`__",
-#TODO quoted \u2018`anonymous reference`__\u2019,
-#TODO quoted \u201c`anonymous reference`__\u201d,
-#TODO quoted \xab`anonymous reference`__\xbb
-#TODO """,
-#TODO u"""\
-#TODO <document source="test data">
-#TODO     <paragraph>
-#TODO         quoted '
-#TODO         <reference anonymous="1" name="anonymous reference">
-#TODO             anonymous reference
-#TODO         ', quoted "
-#TODO         <reference anonymous="1" name="anonymous reference">
-#TODO             anonymous reference
-#TODO         ",
-#TODO         quoted \u2018
-#TODO         <reference anonymous="1" name="anonymous reference">
-#TODO             anonymous reference
-#TODO         \u2019,
-#TODO         quoted \u201c
-#TODO         <reference anonymous="1" name="anonymous reference">
-#TODO             anonymous reference
-#TODO         \u201d,
-#TODO         quoted \xab
-#TODO         <reference anonymous="1" name="anonymous reference">
-#TODO             anonymous reference
-#TODO         \xbb
-#TODO """],
-#TODO [u"""\
-#TODO `'anonymous reference'`__ with quotes, `"anonymous reference"`__ with quotes,
-#TODO `\u2018anonymous reference\u2019`__ with quotes,
-#TODO `\u201canonymous reference\u201d`__ with quotes,
-#TODO `\xabanonymous reference\xbb`__ with quotes
-#TODO """,
-#TODO u"""\
-#TODO <document source="test data">
-#TODO     <paragraph>
-#TODO         <reference anonymous="1" name="'anonymous reference'">
-#TODO             'anonymous reference'
-#TODO          with quotes, \n\
-#TODO         <reference anonymous="1" name=""anonymous reference"">
-#TODO             "anonymous reference"
-#TODO          with quotes,
-#TODO         <reference anonymous="1" name="\u2018anonymous reference\u2019">
-#TODO             \u2018anonymous reference\u2019
-#TODO          with quotes,
-#TODO         <reference anonymous="1" name="\u201canonymous reference\u201d">
-#TODO             \u201canonymous reference\u201d
-#TODO          with quotes,
-#TODO         <reference anonymous="1" name="\xabanonymous reference\xbb">
-#TODO             \xabanonymous reference\xbb
-#TODO          with quotes
-#TODO """],
-#TODO ["""\
-#TODO `phrase reference
-#TODO across lines`_
-#TODO """,
-#TODO """\
-#TODO <document source="test data">
-#TODO     <paragraph>
-#TODO         <reference name="phrase reference across lines" refname="phrase reference across lines">
-#TODO             phrase reference
-#TODO             across lines
-#TODO """],
-#TODO ["""\
-#TODO `phrase\\`_ reference`_
-#TODO """,
-#TODO """\
-#TODO <document source="test data">
-#TODO     <paragraph>
-#TODO         <reference name="phrase`_ reference" refname="phrase`_ reference">
-#TODO             phrase`_ reference
-#TODO """],
-#TODO ["""\
-#TODO Invalid phrase reference:
-#TODO 
-#TODO :role:`phrase reference`_
-#TODO """,
-#TODO """\
-#TODO <document source="test data">
-#TODO     <paragraph>
-#TODO         Invalid phrase reference:
-#TODO     <paragraph>
-#TODO         <problematic ids="id2" refid="id1">
-#TODO             :role:`phrase reference`_
-#TODO     <system_message backrefs="id2" ids="id1" level="2" line="3" source="test data" type="WARNING">
-#TODO         <paragraph>
-#TODO             Mismatch: both interpreted text role prefix and reference suffix.
-#TODO """],
-#TODO ["""\
-#TODO Invalid phrase reference:
-#TODO 
-#TODO `phrase reference`:role:_
-#TODO """,
-#TODO """\
-#TODO <document source="test data">
-#TODO     <paragraph>
-#TODO         Invalid phrase reference:
-#TODO     <paragraph>
-#TODO         <problematic ids="id2" refid="id1">
-#TODO             `phrase reference`:role:_
-#TODO     <system_message backrefs="id2" ids="id1" level="2" line="3" source="test data" type="WARNING">
-#TODO         <paragraph>
-#TODO             Mismatch: both interpreted text role suffix and reference suffix.
-#TODO """],
-#TODO ["""\
-#TODO `phrase reference_ without closing backquote
-#TODO """,
-#TODO """\
-#TODO <document source="test data">
-#TODO     <paragraph>
-#TODO         <problematic ids="id2" refid="id1">
-#TODO             `
-#TODO         phrase \n\
-#TODO         <reference name="reference" refname="reference">
-#TODO             reference
-#TODO          without closing backquote
-#TODO     <system_message backrefs="id2" ids="id1" level="2" line="1" source="test data" type="WARNING">
-#TODO         <paragraph>
-#TODO             Inline interpreted text or phrase reference start-string without end-string.
-#TODO """],
-#TODO ["""\
-#TODO `anonymous phrase reference__ without closing backquote
-#TODO """,
-#TODO """\
-#TODO <document source="test data">
-#TODO     <paragraph>
-#TODO         <problematic ids="id2" refid="id1">
-#TODO             `
-#TODO         anonymous phrase \n\
-#TODO         <reference anonymous="1" name="reference">
-#TODO             reference
-#TODO          without closing backquote
-#TODO     <system_message backrefs="id2" ids="id1" level="2" line="1" source="test data" type="WARNING">
-#TODO         <paragraph>
-#TODO             Inline interpreted text or phrase reference start-string without end-string.
-#TODO """],
-#TODO ]
+totest['phrase_references'] = [
+["""\
+`phrase reference`_
+""",
+"""\
+`phrase reference`_
+"""],
+[u"""\
+l'`phrase reference`_ and l\u2019`phrase reference`_ with apostrophe
+""",
+u"""\
+l'`phrase reference`_ and l\u2019`phrase reference`_ with apostrophe
+"""],
+[u"""\
+quoted '`phrase reference`_', quoted "`phrase reference`_",
+quoted \u2018`phrase reference`_\u2019,
+quoted \u201c`phrase reference`_\u201d,
+quoted \xab`phrase reference`_\xbb
+""",
+u"""\
+quoted '`phrase reference`_', quoted "`phrase reference`_",
+quoted \u2018`phrase reference`_\u2019,
+quoted \u201c`phrase reference`_\u201d,
+quoted \xab`phrase reference`_\xbb
+"""],
+[u"""\
+`'phrase reference'`_ with quotes, `"phrase reference"`_ with quotes,
+`\u2018phrase reference\u2019`_ with quotes,
+`\u201cphrase reference\u201d`_ with quotes,
+`\xabphrase reference\xbb`_ with quotes
+""",
+u"""\
+`'phrase reference'`_ with quotes, `"phrase reference"`_ with quotes,
+`\u2018phrase reference\u2019`_ with quotes,
+`\u201cphrase reference\u201d`_ with quotes,
+`\xabphrase reference\xbb`_ with quotes
+"""],
+["""\
+`anonymous reference`__
+""",
+"""\
+`anonymous reference`__
+"""],
+[u"""\
+l'`anonymous reference`__ and l\u2019`anonymous reference`__ with apostrophe
+""",
+u"""\
+l'`anonymous reference`__ and l\u2019`anonymous reference`__ with apostrophe
+"""],
+[u"""\
+quoted '`anonymous reference`__', quoted "`anonymous reference`__",
+quoted \u2018`anonymous reference`__\u2019,
+quoted \u201c`anonymous reference`__\u201d,
+quoted \xab`anonymous reference`__\xbb
+""",
+u"""\
+quoted '`anonymous reference`__', quoted "`anonymous reference`__",
+quoted \u2018`anonymous reference`__\u2019,
+quoted \u201c`anonymous reference`__\u201d,
+quoted \xab`anonymous reference`__\xbb
+"""],
+[u"""\
+`'anonymous reference'`__ with quotes, `"anonymous reference"`__ with quotes,
+`\u2018anonymous reference\u2019`__ with quotes,
+`\u201canonymous reference\u201d`__ with quotes,
+`\xabanonymous reference\xbb`__ with quotes
+""",
+u"""\
+`'anonymous reference'`__ with quotes, `"anonymous reference"`__ with quotes,
+`\u2018anonymous reference\u2019`__ with quotes,
+`\u201canonymous reference\u201d`__ with quotes,
+`\xabanonymous reference\xbb`__ with quotes
+"""],
+["""\
+`phrase reference
+across lines`_
+""",
+"""\
+`phrase reference
+across lines`_
+"""],
+["""\
+`phrase\\`_ reference`_
+""",
+"""\
+`phrase\\`_ reference`_
+"""],
+["""\
+Invalid phrase reference:
 
-#TODO totest['embedded_URIs'] = [
-#TODO ["""\
-#TODO `phrase reference <http://example.com>`_
-#TODO """,
-#TODO """\
-#TODO <document source="test data">
-#TODO     <paragraph>
-#TODO         <reference name="phrase reference" refuri="http://example.com">
-#TODO             phrase reference
-#TODO         <target ids="phrase-reference" names="phrase\\ reference" refuri="http://example.com">
-#TODO """],
-#TODO ["""\
-#TODO `anonymous reference <http://example.com>`__
-#TODO """,
-#TODO """\
-#TODO <document source="test data">
-#TODO     <paragraph>
-#TODO         <reference name="anonymous reference" refuri="http://example.com">
-#TODO             anonymous reference
-#TODO """],
-#TODO ["""\
-#TODO `embedded URI on next line
-#TODO <http://example.com>`__
-#TODO """,
-#TODO """\
-#TODO <document source="test data">
-#TODO     <paragraph>
-#TODO         <reference name="embedded URI on next line" refuri="http://example.com">
-#TODO             embedded URI on next line
-#TODO """],
-#TODO ["""\
-#TODO `embedded URI across lines <http://example.com/
-#TODO long/path>`__
-#TODO """,
-#TODO """\
-#TODO <document source="test data">
-#TODO     <paragraph>
-#TODO         <reference name="embedded URI across lines" refuri="http://example.com/long/path">
-#TODO             embedded URI across lines
-#TODO """],
-#TODO ["""\
-#TODO `embedded URI with whitespace <http://example.com/
-#TODO long/path /and  /whitespace>`__
-#TODO """,
-#TODO """\
-#TODO <document source="test data">
-#TODO     <paragraph>
-#TODO         <reference name="embedded URI with whitespace" refuri="http://example.com/long/path/and/whitespace">
-#TODO             embedded URI with whitespace
-#TODO """],
-#TODO [r"""
-#TODO `embedded URI with escaped whitespace <http://example.com/a\
-#TODO long/path\ and/some\ escaped\ whitespace>`__
-#TODO 
-#TODO `<omitted\ reference\ text\ with\ escaped\ whitespace>`__
-#TODO """,
-#TODO """\
-#TODO <document source="test data">
-#TODO     <paragraph>
-#TODO         <reference name="embedded URI with escaped whitespace" refuri="http://example.com/a long/path and/some escaped whitespace">
-#TODO             embedded URI with escaped whitespace
-#TODO     <paragraph>
-#TODO         <reference name="omitted reference text with escaped whitespace" refuri="omitted reference text with escaped whitespace">
-#TODO             omitted reference text with escaped whitespace
-#TODO """],
-#TODO ["""\
-#TODO `embedded email address <jdoe@example.com>`__
-#TODO 
-#TODO `embedded email address broken across lines <jdoe
-#TODO @example.com>`__
-#TODO """,
-#TODO """\
-#TODO <document source="test data">
-#TODO     <paragraph>
-#TODO         <reference name="embedded email address" refuri="mailto:jdoe@example.com">
-#TODO             embedded email address
-#TODO     <paragraph>
-#TODO         <reference name="embedded email address broken across lines" refuri="mailto:jdoe@example.com">
-#TODO             embedded email address broken across lines
-#TODO """],
-#TODO [r"""
-#TODO `embedded URI with too much whitespace < http://example.com/
-#TODO long/path /and  /whitespace >`__
-#TODO 
-#TODO `embedded URI with too much whitespace at end <http://example.com/
-#TODO long/path /and  /whitespace >`__
-#TODO 
-#TODO `embedded URI with no preceding whitespace<http://example.com>`__
-#TODO 
-#TODO `escaped URI \<http://example.com>`__
-#TODO 
-#TODO See `HTML Anchors: \<a>`_.
-#TODO """,
-#TODO """\
-#TODO <document source="test data">
-#TODO     <paragraph>
-#TODO         <reference anonymous="1" name="embedded URI with too much whitespace < http://example.com/ long/path /and /whitespace >">
-#TODO             embedded URI with too much whitespace < http://example.com/
-#TODO             long/path /and  /whitespace >
-#TODO     <paragraph>
-#TODO         <reference anonymous="1" name="embedded URI with too much whitespace at end <http://example.com/ long/path /and /whitespace >">
-#TODO             embedded URI with too much whitespace at end <http://example.com/
-#TODO             long/path /and  /whitespace >
-#TODO     <paragraph>
-#TODO         <reference anonymous="1" name="embedded URI with no preceding whitespace<http://example.com>">
-#TODO             embedded URI with no preceding whitespace<http://example.com>
-#TODO     <paragraph>
-#TODO         <reference anonymous="1" name="escaped URI <http://example.com>">
-#TODO             escaped URI <http://example.com>
-#TODO     <paragraph>
-#TODO         See \n\
-#TODO         <reference name="HTML Anchors: <a>" refname="html anchors: <a>">
-#TODO             HTML Anchors: <a>
-#TODO         .
-#TODO """],
-#TODO ["""\
-#TODO Relative URIs' reference text can be omitted:
-#TODO 
-#TODO `<reference>`_
-#TODO 
-#TODO `<anonymous>`__
-#TODO """,
-#TODO """\
-#TODO <document source="test data">
-#TODO     <paragraph>
-#TODO         Relative URIs' reference text can be omitted:
-#TODO     <paragraph>
-#TODO         <reference name="reference" refuri="reference">
-#TODO             reference
-#TODO         <target ids="reference" names="reference" refuri="reference">
-#TODO     <paragraph>
-#TODO         <reference name="anonymous" refuri="anonymous">
-#TODO             anonymous
-#TODO """],
-#TODO [r"""
-#TODO Escape trailing low-line char in URIs:
-#TODO 
-#TODO `<reference\_>`_
-#TODO 
-#TODO `<anonymous\_>`__
-#TODO """,
-#TODO """\
-#TODO <document source="test data">
-#TODO     <paragraph>
-#TODO         Escape trailing low-line char in URIs:
-#TODO     <paragraph>
-#TODO         <reference name="reference_" refuri="reference_">
-#TODO             reference_
-#TODO         <target ids="reference" names="reference_" refuri="reference_">
-#TODO     <paragraph>
-#TODO         <reference name="anonymous_" refuri="anonymous_">
-#TODO             anonymous_
-#TODO """],
-#TODO ["""\
-#TODO Escape other char in URIs:
-#TODO 
-#TODO `<reference\\:1>`_
-#TODO 
-#TODO `<anonymous\\call>`__
-#TODO """,
-#TODO """\
-#TODO <document source="test data">
-#TODO     <paragraph>
-#TODO         Escape other char in URIs:
-#TODO     <paragraph>
-#TODO         <reference name="reference:1" refuri="reference:1">
-#TODO             reference:1
-#TODO         <target ids="reference-1" names="reference:1" refuri="reference:1">
-#TODO     <paragraph>
-#TODO         <reference name="anonymouscall" refuri="anonymouscall">
-#TODO             anonymouscall
-#TODO """],
-#TODO ]
+:role:`phrase reference`_
+""",
+"""\
+Invalid phrase reference:
+
+:role:`phrase reference`_
+"""],
+["""\
+Invalid phrase reference:
+
+`phrase reference`:role:_
+""",
+"""\
+Invalid phrase reference:
+
+`phrase reference`:role:_
+"""],
+["""\
+`phrase reference_ without closing backquote
+""",
+"""\
+`phrase reference_ without closing backquote
+"""],
+["""\
+`anonymous phrase reference__ without closing backquote
+""",
+"""\
+`anonymous phrase reference__ without closing backquote
+"""],
+]
+
+totest['embedded_URIs'] = [
+["""\
+`phrase reference <http://example.com>`_
+""",
+"""\
+`phrase reference <http://example.com>`_
+"""],
+["""\
+`anonymous reference <http://example.com>`__
+""",
+# Anonymous URI references resolve to normal ones!
+"""\
+`anonymous reference <http://example.com>`_
+"""],
+["""\
+`embedded URI on next line
+<http://example.com>`__
+""",
+"""\
+`embedded URI on next line <http://example.com>`_
+"""],
+["""\
+`embedded URI across lines <http://example.com/
+long/path>`__
+""",
+"""\
+`embedded URI across lines <http://example.com/long/path>`_
+"""],
+["""\
+`embedded URI with whitespace <http://example.com/
+long/path /and  /whitespace>`__
+""",
+"""\
+`embedded URI with whitespace <http://example.com/long/path/and/whitespace>`_
+"""],
+[r"""
+`embedded URI with escaped whitespace <http://example.com/a\
+long/path\ and/some\ escaped\ whitespace>`__
+
+`<omitted\ reference\ text\ with\ escaped\ whitespace>`__
+""",
+"""\
+`embedded URI with escaped whitespace <http://example.com/a\ long/path\ and/some\ escaped\ whitespace>`_
+
+`<omitted\ reference\ text\ with\ escaped\ whitespace>`_
+"""],
+["""\
+`embedded email address <jdoe@example.com>`__
+
+`embedded email address <mailto:jdoe@example.com>`__
+
+`embedded email address broken across lines <jdoe
+@example.com>`__
+""",
+"""\
+`embedded email address <mailto:jdoe@example.com>`_
+
+`embedded email address <mailto:jdoe@example.com>`_
+
+`embedded email address broken across lines <mailto:jdoe@example.com>`_
+"""],
+[r"""`embedded URI with too much whitespace < http://example.com/
+long/path /and  /whitespace >`__
+
+`embedded URI with too much whitespace at end <http://example.com/
+long/path /and  /whitespace >`__
+
+`embedded URI with no preceding whitespace<http://example.com>`__
+
+`escaped URI \<http://example.com>`__
+
+See `HTML Anchors: \<a>`_.
+""",
+r"""`embedded URI with too much whitespace \< http://example.com/
+long/path /and  /whitespace >`__
+
+`embedded URI with too much whitespace at end \<http://example.com/
+long/path /and  /whitespace >`__
+
+`embedded URI with no preceding whitespace\<http://example.com>`__
+
+`escaped URI \<http://example.com>`__
+
+See `HTML Anchors: \<a>`_.
+"""],
+["""\
+Relative URIs' reference text can be omitted:
+
+`<reference>`_
+
+`<anonymous>`__
+""",
+# A relative anonymous reference aliases with a normal relative reference
+"""\
+Relative URIs' reference text can be omitted:
+
+`<reference>`_
+
+`<anonymous>`_
+"""],
+[r"""
+Escape trailing low-line char in URIs:
+
+`<reference\_>`_
+
+`<anonymous\_>`__
+""",
+"""\
+Escape trailing low-line char in URIs:
+
+`<reference\_>`_
+
+`<anonymous\_>`_
+"""],
+["""\
+Escape other char in URIs:
+
+`<reference\\:1>`_
+
+`<anonymous\\call>`__
+""",
+"""\
+Escape other char in URIs:
+
+`<reference:1>`_
+
+`<anonymouscall>`_
+"""],
+["""\
+`reference_`_
+
+`reference\\_`_
+
+`<reference\\_>`_
+
+`<reference_>`_
+
+`<reference_name>`_
+
+`<reference\\_name>`_
+""",
+"""\
+`reference\\_`_
+
+`reference\\_`_
+
+`<reference\\_>`_
+
+reference_
+
+`<reference\\_name>`_
+
+`<reference\\_name>`_
+"""],
+]
 
 #TODO totest['embedded_aliases'] = [
 #TODO ["""\
@@ -986,49 +783,50 @@ _`inline target without closing backquote
 """],
 ]
 
-#TODO totest['footnote_reference'] = [
-#TODO ["""\
-#TODO [1]_
-#TODO """,
-#TODO """\
-#TODO <document source="test data">
-#TODO     <paragraph>
-#TODO         <footnote_reference ids="id1" refname="1">
-#TODO             1
-#TODO """],
-#TODO ["""\
-#TODO [#]_
-#TODO """,
-#TODO """\
-#TODO <document source="test data">
-#TODO     <paragraph>
-#TODO         <footnote_reference auto="1" ids="id1">
-#TODO """],
-#TODO ["""\
-#TODO [#label]_
-#TODO """,
-#TODO """\
-#TODO <document source="test data">
-#TODO     <paragraph>
-#TODO         <footnote_reference auto="1" ids="id1" refname="label">
-#TODO """],
-#TODO ["""\
-#TODO [*]_
-#TODO """,
-#TODO """\
-#TODO <document source="test data">
-#TODO     <paragraph>
-#TODO         <footnote_reference auto="*" ids="id1">
-#TODO """],
-#TODO ["""\
-#TODO Adjacent footnote refs are not possible: [*]_[#label]_ [#]_[2]_ [1]_[*]_
-#TODO """,
-#TODO """\
-#TODO <document source="test data">
-#TODO     <paragraph>
-#TODO         Adjacent footnote refs are not possible: [*]_[#label]_ [#]_[2]_ [1]_[*]_
-#TODO """],
-#TODO ]
+totest['footnote_reference'] = [
+["""\
+[1]_
+""",
+"""\
+[1]_
+"""],
+["""\
+[#]_
+""",
+"""\
+[#]_
+"""],
+["""\
+[#label]_
+""",
+"""\
+[#label]_
+"""],
+["""\
+[*]_
+""",
+"""\
+[*]_
+"""],
+["""\
+[*label]_
+""",
+"""\
+[*label]_
+"""],
+["""\
+Back to back: [*]_ [#label]_ [#]_ [2]_ [1]_ [*label]_
+""",
+"""\
+Back to back: [*]_ [#label]_ [#]_ [2]_ [1]_ [*label]_
+"""],
+["""\
+Adjacent footnote refs are not possible: [*]_[#label]_ [#]_[2]_ [1]_[*]_
+""",
+"""\
+Adjacent footnote refs are not possible: [*]_[#label]_ [#]_[2]_ [1]_[*]_
+"""],
+]
 
 #TODO totest['citation_reference'] = [
 #TODO ["""\

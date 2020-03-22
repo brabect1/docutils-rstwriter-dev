@@ -307,29 +307,33 @@ class Writer(writers.Writer):
         if not document or not isinstance(document, nodes.document):
             return {}
         else:
-            ids = {}
+            ids_hash = {}
             for node in document.traverse():
                 if 'ids' in node:
                     if isinstance(node, nodes.system_message):
                         continue
 
+                    ids = node['ids']
+
                     #if 'anonymous' in node and node['anonymous']==1:
                     if 'anonymous' in node:
                         for refid in node['ids']:
-                            ids[refid] = None
+                            ids_hash[refid] = None
                     else:
                         assert 'names' in node
                         if len(node['names']) > 0:
-                            assert len(node['ids']) == len(node['names'])
+                            # In case of dangling references, there might be `target` nodes
+                            # with less `ids` than `names`
+                            assert len(ids) <= len(node['names'])
                             names = 'names'
                         else:
                             assert 'dupnames' in node
-                            assert len(node['ids']) == len(node['dupnames'])
+                            assert len(ids) == len(node['dupnames'])
                             names = 'dupnames'
 
-                        for refid, name in zip(node['ids'], node[names]):
-                            ids[refid] = name
-            return ids
+                        for refid, name in zip(ids, node[names][:len(ids)]):
+                            ids_hash[refid] = name
+            return ids_hash
 
     def abc(self):
         for i in self.document.traverse():
@@ -375,6 +379,7 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
         self.options = options
         self.tstack = ''
         self.text = ''
+        self.tstack_stack = []
         self.heads = ["=", "-", ".", "~", "^"]
         self.table = []
         self.table_rowcells = []
@@ -385,6 +390,14 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
     def vindent(self):
         if len(self.tstack)==0: return ''
         else: return '\n'
+
+    def push_tstack(self):
+        self.tstack_stack.append(self.tstack)
+        self.tstack = ''
+
+    def pop_tstack(self):
+        if len(self.tstack_stack) > 0:
+            self.tstack = self.tstack_stack.pop() + self.tstack
 
     def depart_document(self, node):
         if len(self.text)>0: self.text += '\n'
@@ -559,14 +572,81 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
     def depart_literal(self, node): self.tstack += '``'
 
     def visit_reference(self, node):
-        #lvl = node.get("")
-        pass
+        assert 'name' in node or 'refuri' in node
+        if 'name' in node:
+            if 'refuri' in node:
+                self.tstack += '`'
+            else:
+                name = node['name']
+                if len(name.split()) > 1:
+                    # this must be a phrase reference
+                    self.tstack += '`'
+        elif 'refuri' in node:
+            pass
+
+        # save the text stack and reset it (to empty)
+        self.push_tstack()
 
     def depart_reference(self, node):
-        if not('name' in node):
-            pass
-        else:
+        # In case of phrase references, we need to excape the phrase text.
+        # A `reference` node shall have only `Text` underneath. Since we saved text stack
+        # and reset text stack on `reference` visit, we can escape the whole text stack.
+        for (k,v) in RstCollectVisitor.reference_phrase_escapes:
+            if k in self.tstack: self.tstack = self.tstack.replace(k,v);
+
+        if 'name' in node:
+            if 'refuri' in node:
+                refuri = node['refuri']
+                # Check if we can simplify the reference to a form of `<refuri>`_.
+                if refuri==self.tstack:
+                    self.tstack = ''
+                else:
+                    self.tstack += ' '
+
+                for (k,v) in RstCollectVisitor.refuri_escapes:
+                    if k in refuri: refuri = refuri.replace(k,v);
+                self.tstack += '<' + refuri + '>`'
+            else:
+                name = node['name']
+                if len(name.split()) > 1:
+                    # this must be a phrase reference
+                    self.tstack += '`'
+                elif name[-1]=='_':
+                    # need to escape the last underscore and use backticks
+                    self.tstack = '`' + self.tstack[:-1] + '\\_`'
             self.tstack += '_'
+            if 'anonymous' in node and node['anonymous']==1:
+                self.tstack += '_'
+        elif 'refuri' in node:
+            pass
+
+        # restore the last text stack and append the present contents to it
+        self.pop_tstack()
+
+    def visit_footnote_reference(self, node):
+        self.tstack += '['
+        if 'auto' in node and (node['auto']==1 or node['auto']=='*'):
+            if node['auto']==1:
+                self.tstack += '#'
+            else:
+                self.tstack += '*'
+            if 'refname' in node:
+                self.tstack += node['refname']
+
+    def depart_footnote_reference(self, node):
+        self.tstack += ']_'
+
+    reference_phrase_escapes = [
+            ('\\', '\\\\'),
+            ('`', '\`'),
+            ('<', '\<'),
+            ]
+
+    refuri_escapes = [
+            ('\\', '\\\\'),
+            (' ', '\ '),
+            ('_', '\_'),
+            ]
 
     target_name_escapes = [
             ('\\', '\\\\'),
