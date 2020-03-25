@@ -247,7 +247,10 @@ class Writer(writers.Writer):
                     break
                 n = p
 
-            if isinstance(node, nodes.block_quote) or isinstance(node, nodes.literal_block):
+            if isinstance(node, nodes.entry):
+                # This signals a table cell, hence we reset the indent.
+                s = ''
+            elif isinstance(node, nodes.block_quote) or isinstance(node, nodes.literal_block):
                 s += "  "
             elif isinstance(node, nodes.line_block):
                 s += "| "
@@ -295,7 +298,9 @@ class Writer(writers.Writer):
                 s += "   "
             elif isinstance(node, nodes.Admonition):
                 s += "   "
-            elif isinstance(node, nodes.image):
+            elif isinstance(node, nodes.image) and not isinstance(node.parent, nodes.figure):
+                s += "   "
+            elif isinstance(node, nodes.figure):
                 s += "   "
             elif isinstance(node, nodes.footnote):
                 s += "   "
@@ -760,7 +765,7 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
 
         self.tstack = self.table_tstacks.pop()
         if self.tstack: self.tstack += self.vindent()
-        self.tstack += table.format() + '\n'
+        self.tstack += table.format(prefix=Writer.get_indent(node.parent)) + '\n'
         #TODO cell = self.table.get_cell(4,3)
         #TODO print '-------' + str(cell.get_lineheight()) + ' ' + str(cell.lessrows)
         #TODO for l in cell.get_text().splitlines():
@@ -856,28 +861,62 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
             ('scale', 'scale'),
             ('alt', 'alt'),
             ('align', 'align')
-            ];
+            ]
+
+    figure_attr_map = [
+            ('classes', 'figclass'),
+            ('width', 'figwidth'),
+            ('height', 'figheight'),
+            ('align', 'align')
+            ]
 
     def visit_image(self, node):
         p = node.parent
+        if isinstance(p, nodes.figure):
+            directive = 'figure'
+            p = p.parent
+        else:
+            directive = 'image'
         if not isinstance(p, nodes.list_item):
             self.tstack += self.vindent()
-        self.tstack += Writer.get_indent(node.parent)
-        self.tstack += ".. " + node.__class__.__name__ + ':: ' \
+        self.tstack += Writer.get_indent(p)
+        self.tstack += ".. " + directive + ':: ' \
                 + node['uri'] + '\n'
 
         indent = Writer.get_indent(node)
-        for (k,v) in RstCollectVisitor.image_attr_map:
-            if k in node:
-                val = node[k]
-                if isinstance(val,list) and len(val) == 0:
-                    continue
-                self.tstack += indent + ':' + v + ':'
-                if isinstance(val,list) and len(val) > 0:
-                    self.tstack += ' ' + ' '.join(val)
-                elif str(val):
-                    self.tstack += ' ' + str(val)
-                self.tstack += '\n'
+
+        l = []
+        l.append( (node, RstCollectVisitor.image_attr_map) )
+        if isinstance(node.parent, nodes.figure):
+            l.append( (node.parent, RstCollectVisitor.figure_attr_map) )
+
+        for n, attr_map in l:
+            for (k,v) in attr_map:
+                if k in n:
+                    val = n[k]
+                    if isinstance(val,list) and len(val) == 0:
+                        continue
+                    self.tstack += indent + ':' + v + ':'
+                    if isinstance(val,list) and len(val) > 0:
+                        self.tstack += ' ' + ' '.join(val)
+                    elif str(val):
+                        self.tstack += ' ' + str(val)
+                    self.tstack += '\n'
+
+    def visit_legend(self, node):
+        p = node.parent
+        assert isinstance(p, nodes.figure)
+
+        # Check for missing cpation.
+        if p.index(node) == 1:
+            # We need to add an empty caption (i.e. an empty comment)
+            self.tstack += self.vindent()  + Writer.get_indent(node) + '..\n'
+
+    def visit_caption(self, node):
+        self.visit_paragraph(node)
+
+    def depart_caption(self, node):
+        self.depart_paragraph(node)
 
     def visit_label(self, node):
         p = node.parent

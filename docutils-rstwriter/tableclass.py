@@ -307,7 +307,7 @@ class tableclass(object):
             return None
         return self.rows[row].get_cell(col)
 
-    def format(self):
+    def format(self, prefix=''):
         colcount = self.get_colcount()
         colwidths = self.get_colwidths( colcount )
         rowcount = len(self.rows)
@@ -379,7 +379,7 @@ class tableclass(object):
                         rule[m] = '+'
                 rule = ''.join(rule)
 
-            t += rule + '\n'
+            t += prefix + rule + '\n'
 #TODO            print rule
 
             # add text lines (up to row's height)
@@ -395,7 +395,7 @@ class tableclass(object):
                     else:
                         line += ' ' + fmt.format(ctexts[i][l])
                     line += ' |'
-                t += line + '\n'
+                t += prefix + line + '\n'
 #TODO                print line
 
             # update variables for next iteration
@@ -432,7 +432,7 @@ class tableclass(object):
                     else:
                         rule += '|'
         if rule != None:
-            t += rule
+            t += prefix + rule
         return t
 
 
