@@ -828,44 +828,26 @@ Adjacent footnote refs are not possible: [*]_[#label]_ [#]_[2]_ [1]_[*]_
 """],
 ]
 
-#TODO totest['citation_reference'] = [
-#TODO ["""\
-#TODO [citation]_
-#TODO """,
-#TODO """\
-#TODO <document source="test data">
-#TODO     <paragraph>
-#TODO         <citation_reference ids="id1" refname="citation">
-#TODO             citation
-#TODO """],
-#TODO ["""\
-#TODO [citation]_ and [cit-ation]_ and [cit.ation]_ and [CIT1]_ but not [CIT 1]_
-#TODO """,
-#TODO """\
-#TODO <document source="test data">
-#TODO     <paragraph>
-#TODO         <citation_reference ids="id1" refname="citation">
-#TODO             citation
-#TODO          and \n\
-#TODO         <citation_reference ids="id2" refname="cit-ation">
-#TODO             cit-ation
-#TODO          and \n\
-#TODO         <citation_reference ids="id3" refname="cit.ation">
-#TODO             cit.ation
-#TODO          and \n\
-#TODO         <citation_reference ids="id4" refname="cit1">
-#TODO             CIT1
-#TODO          but not [CIT 1]_
-#TODO """],
-#TODO ["""\
-#TODO Adjacent citation refs are not possible: [citation]_[CIT1]_
-#TODO """,
-#TODO """\
-#TODO <document source="test data">
-#TODO     <paragraph>
-#TODO         Adjacent citation refs are not possible: [citation]_[CIT1]_
-#TODO """],
-#TODO ]
+totest['citation_reference'] = [
+["""\
+[citation]_
+""",
+"""\
+[citation]_
+"""],
+["""\
+[citation]_ and [cit-ation]_ and [cit.ation]_ and [CIT1]_ but not [CIT 1]_
+""",
+"""\
+[citation]_ and [cit-ation]_ and [cit.ation]_ and [CIT1]_ but not [CIT 1]_
+"""],
+["""\
+Adjacent citation refs are not possible: [citation]_[CIT1]_
+""",
+"""\
+Adjacent citation refs are not possible: [citation]_[CIT1]_
+"""],
+]
 
 #TODO totest['substitution_references'] = [
 #TODO ["""\

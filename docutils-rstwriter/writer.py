@@ -299,6 +299,8 @@ class Writer(writers.Writer):
                 s += "   "
             elif isinstance(node, nodes.footnote):
                 s += "   "
+            elif isinstance(node, nodes.citation):
+                s += "   "
 
             return s
 
@@ -438,7 +440,7 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
                       lines.append(' '+line)
                   elif isinstance(pe, nodes.paragraph) and isinstance(pe.parent, nodes.Admonition) and pe.parent.index(pe)==0:
                       lines.append(' '+line)
-                  elif isinstance(pe, nodes.paragraph) and isinstance(pe.parent, nodes.footnote) and pe.parent.index(pe)==1:
+                  elif isinstance(pe, nodes.paragraph) and (isinstance(pe.parent, nodes.footnote) or isinstance(pe.parent, nodes.citation)) and pe.parent.index(pe)==1:
                       lines.append(' '+line)
                   elif isinstance(pe, nodes.title) and isinstance(pe.parent, nodes.admonition):
                       lines.append(' '+line)
@@ -532,16 +534,17 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
 
     def visit_paragraph(self, node):
         p = node.parent
-        if not (isinstance(p, nodes.list_item) or isinstance(p, nodes.field_body) or isinstance(p, nodes.Admonition) or isinstance(p, nodes.footnote)):
+        if not (isinstance(p, nodes.list_item) or isinstance(p, nodes.field_body) or isinstance(p, nodes.Admonition) or isinstance(p, nodes.footnote) or isinstance(p, nodes.citation)):
             # For all but a paragraph in certain elements add a vertical space
             # before the paragraph. The special elements are:
             # - list_item's
             # - field_body's
             # - admonitions
             # - footnotes
+            # - citations
             self.tstack += self.vindent()
         elif p.index(node) != 0 and \
-                not (p.index(node) == 1 and isinstance(p, nodes.footnote)):
+                not (p.index(node) == 1 and (isinstance(p, nodes.footnote) or isinstance(p, nodes.citation))):
             # For 2nd+ paragraph in a list item we need to add a vertical
             # space.
             self.tstack += self.vindent()
@@ -634,6 +637,12 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
                 self.tstack += node['refname']
 
     def depart_footnote_reference(self, node):
+        self.tstack += ']_'
+
+    def visit_citation_reference(self, node):
+        self.tstack += '['
+
+    def depart_citation_reference(self, node):
         self.tstack += ']_'
 
     reference_phrase_escapes = [
@@ -872,8 +881,8 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
 
     def visit_label(self, node):
         p = node.parent
-        if isinstance(p, nodes.footnote):
-            # `label` used with footnotes is presently ignored
+        if isinstance(p, nodes.footnote) or isinstance(p, nodes.citation):
+            # `label` used with footnotes and cittions is presently ignored
             # (we take the ft. label from its `names` attribute)
             raise nodes.SkipChildren()
         else:
@@ -900,3 +909,21 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
             self.tstack += self.vindent()
         self.tstack += Writer.get_indent(node.parent)
         self.tstack += '.. [' + ft + ']'
+
+    def depart_citation(self, node):
+        if len(node.children) == 1:
+            # There is no body of the citation, so we need to add
+            # newline.
+            self.tstack += '\n'
+
+    def visit_citation(self, node):
+        assert 'names' in node and len(node['names']) > 0
+        label = node['names'][0]
+
+        p = node.parent
+        pidx = p.index(node)
+        if not isinstance(p, nodes.list_item) and \
+                not (pidx > 0 and isinstance(p[pidx-1], nodes.citation)):
+            self.tstack += self.vindent()
+        self.tstack += Writer.get_indent(node.parent)
+        self.tstack += '.. [' + label + ']'
