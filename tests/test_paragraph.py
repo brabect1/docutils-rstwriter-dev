@@ -73,10 +73,55 @@ A. Einstein was a really
 smart dude.
 """,
 """\
-A. Einstein was a really
+\\A. Einstein was a really
 smart dude.
 """],
 ]
+
+totest['paragraphs_odd_starts'] = [
+# Aliasing with a line block
+["""\
+\\| This is not a line block.
+| The vertical bar is simply part of a paragraph.
+""",
+"""\
+\\| This is not a line block.
+\\| The vertical bar is simply part of a paragraph.
+"""],
+# Aliasing with a block quote
+["""\
+\\ This is not a block quote
+\\ with multiple lines.
+
+\\  This is not a block quote
+\\  with multiple lines.
+
+\\   This is not a block quote
+\\   with multiple lines.
+""",
+"""\
+This is not a block quote
+with multiple lines.
+
+\\  This is not a block quote
+\\  with multiple lines.
+
+\\   This is not a block quote
+\\   with multiple lines.
+"""],
+# Aliasing with a bullet list item
+["""\
+\\- This is not a bullet list.
+
+\\* This is not a bullet list.
+""",
+"""\
+\\- This is not a bullet list.
+
+\\* This is not a bullet list.
+"""],
+]
+
 
 def load_tests(loader, tests, pattern):
     return suite()

@@ -120,7 +120,7 @@ A paragraph::
     A literal block without a blank line first?
 """,
 """\
-A paragraph::
+A paragraph\\:\\:
   A literal block without a blank line first?
 """],
 ["""\
@@ -245,20 +245,20 @@ Term \\: not a classifier
     Because the colon is escaped.
 """,
 """\
-Term: not a classifier
+Term\\: not a classifier
   Because there's no space before the colon.
-Term :not a classifier
+Term \\:not a classifier
   Because there's no space after the colon.
 Term \\: not a classifier
   Because the colon is escaped.
 """],
 ["""\
 Term \\: not a classifier
-  Definition (fails in docutils 0.14 due to 'node.astext' not having '\\:')
+  Definition (fails in docutils 0.14 due to 'node.astext' not having '\\\\:')
 """,
 """\
 Term \\: not a classifier
-  Definition (fails in docutils 0.14 due to 'node.astext' not having '\\:')
+  Definition (fails in docutils 0.14 due to 'node.astext' not having '\\\\:')
 """],
 ["""\
 Term \\: not a classifier : classifier

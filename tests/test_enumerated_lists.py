@@ -57,7 +57,7 @@ No blank lines betwen items:
 empty item above, no blank line
 """,
 """\
-1.
+\\1.
 empty item above, no blank line
 """],
 ["""\
@@ -82,7 +82,7 @@ Scrambled:
 
 1. Item one.
 
-3. Item three.
+\\3. Item three.
 2. Item two.
 1. Item one.
 """],
@@ -98,7 +98,7 @@ Skipping item 3:
 
 1. Item 1.
 
-2. Item 2.
+\\2. Item 2.
 4. Item 4.
 """],
 ["""\
@@ -248,15 +248,15 @@ iii. iii
 iiii. iiii
   second line
 
-(LCD) is an acronym made up of Roman numerals
+\\(LCD) is an acronym made up of Roman numerals
 
-(livid) is a word made up of Roman numerals
+\\(livid) is a word made up of Roman numerals
 
-(CIVIL) is another such word
+\\(CIVIL) is another such word
 
 (I) I
 
-(IVXLCDM) IVXLCDM
+\\(IVXLCDM) IVXLCDM
 """],
 ["""\
 Potentially ambiguous cases:
@@ -429,7 +429,7 @@ u"""\
 A. Einstein was a great influence on
 B. Physicist, who was a colleague of
 
-C. Chemist.  They all worked in
+\\C. Chemist.  They all worked in
 Princeton, NJ.
 
 Using a non-breaking space as a workaround:
@@ -512,7 +512,7 @@ iii. Item three.
 """\
 1. Item one.
 
-#. Item two.
+\\#. Item two.
 3. Item three.
 """],
 ["""\
@@ -520,7 +520,7 @@ z.
 x
 """,
 """\
-z.
+\\z.
 x
 """],
 ["""\
@@ -572,7 +572,7 @@ No item content:
 
 0-space indent, not a list item:
 
-1.
+\\1.
 foo
 
 No item content:

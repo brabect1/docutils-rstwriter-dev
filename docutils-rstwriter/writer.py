@@ -23,6 +23,7 @@
 
 __docformat__ = 'reStructuredText'
 
+import re
 import roman
 import textwrap
 import tableclass
@@ -253,7 +254,10 @@ class Writer(writers.Writer):
             elif isinstance(node, nodes.block_quote) or isinstance(node, nodes.literal_block):
                 s += "  "
             elif isinstance(node, nodes.line_block):
-                s += "| "
+                if isinstance(node.parent, nodes.line_block):
+                    s += '  '
+                else:
+                    s += "| "
             elif isinstance(node, nodes.list_item):
                 if isinstance(node.parent, nodes.bullet_list):
                     s += node.parent.get("bullet")+" "
@@ -305,6 +309,8 @@ class Writer(writers.Writer):
             elif isinstance(node, nodes.footnote):
                 s += "   "
             elif isinstance(node, nodes.citation):
+                s += "   "
+            elif isinstance(node, nodes.math_block):
                 s += "   "
 
             return s
@@ -406,6 +412,17 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
         if len(self.tstack_stack) > 0:
             self.tstack = self.tstack_stack.pop() + self.tstack
 
+    def visit_document(self, node):
+        if 'title' in node:
+            title = node['title']
+            if len(node.children) > 0 and isinstance(node[0], nodes.title):
+                if title == node[0].astext():
+                    title = None
+
+            if title:
+                self.tstack += self.vindent()
+                self.tstack += '.. title:: ' + title + '\n'
+
     def depart_document(self, node):
         if len(self.text)>0: self.text += '\n'
         self.text += self.tstack
@@ -434,45 +451,87 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
             #TODO # b) ignore all `classifier` as they will be already part
             #TODO #    of `term`'s parrent rawsource
             #TODO lines.append(Writer.get_indent(pe.parent)+pn.rawsource)
-            lines.append(Writer.get_indent(pe.parent)+node.astext())
+            s = node.astext()
+            if pe == pn:
+                # Unless the `term` is embedded inside an inline element,
+                # then do escape the colon character.
+                s = s.replace(':', '\\:')
+            lines.append(Writer.get_indent(pe.parent)+s)
         else:
-          for line in node.astext().splitlines(True):
-              if i==0:
-                  if isinstance(pe, nodes.paragraph) and isinstance(pe.parent, nodes.list_item) and pe.parent.index(pe)==0:
-                      lines.append(Writer.get_indent(pe.parent)+line)
-                      #lines.append(Writer.get_indent(pe.parent)+line+"#"+str(i))
-                  elif isinstance(pe, nodes.paragraph) and isinstance(pe.parent, nodes.field_body) and pe.parent.index(pe)==0:
-                      lines.append(' '+line)
-                  elif isinstance(pe, nodes.paragraph) and isinstance(pe.parent, nodes.Admonition) and pe.parent.index(pe)==0:
-                      lines.append(' '+line)
-                  elif isinstance(pe, nodes.paragraph) and (isinstance(pe.parent, nodes.footnote) or isinstance(pe.parent, nodes.citation)) and pe.parent.index(pe)==1:
-                      lines.append(' '+line)
-                  elif isinstance(pe, nodes.title) and isinstance(pe.parent, nodes.admonition):
-                      lines.append(' '+line)
-                  elif isinstance(pe, nodes.attribution):
-                      lines.append(indent + '-- ' + line)
-                  elif isinstance(pe, nodes.comment):
-                      lines.append(line)
-                  elif isinstance(pe, nodes.line):
-                      lines.append(line)
-                  else:
-                      if isinstance(pn, nodes.Inline):
-                          #line = "<>"+line+"</>"
-                          pass
-                      ps = node
-                      while (ps.parent != None and ps.parent != pe):
-                          ps = ps.parent
-                      #lines.append(indent+line+"#"+str(i)+",pe="+pe.__class__.__name__+"#")
-                      #x = pe.index(ps)
-                      #lines.append(indent+line+"#"+str(i)+",x="+str(x)+",pe="+pe.__class__.__name__+"#")
-                      if (ps.parent==pe and pe.index(ps) > 0):
-                          lines.append(line)
-                      else:
-                          lines.append(indent+line)
-              else:
-                  #lines.append(indent+line+"#"+str(i))
-                  lines.append(indent+line)
-              i += 1
+            for line in node.astext().splitlines(True):
+                if pe==pn and isinstance(pe, nodes.paragraph) and len(line) > 0:
+                    # We need to escape the escape character.
+                    line = line.replace('\\', '\\\\')
+
+                    # We need to escape some of the line starting chracters so they
+                    # do not alias with a start of another element.
+                    if line[0]=='|':
+                        line = '\\'+line
+                    elif line[0].isspace():
+                        ni = pn.index(node)
+                        if ni == 0 or isinstance(pn[ni-1], nodes.Text):
+                            line = '\\ '+line
+                    elif i == 0 and pn.index(node) == 0:
+                        if re.match(docutils.parsers.rst.states.Body.patterns['bullet'], line):
+                            line = '\\'+line
+                        elif re.match(docutils.parsers.rst.states.Body.patterns['enumerator'], line):
+                            line = '\\'+line
+                    pass
+
+                if i==0:
+                    if isinstance(pe, nodes.paragraph) and isinstance(pe.parent, nodes.list_item) and pe.parent.index(pe)==0:
+                        lines.append(Writer.get_indent(pe.parent)+line)
+                        #lines.append(Writer.get_indent(pe.parent)+line+"#"+str(i))
+                    elif isinstance(pe, nodes.paragraph) and isinstance(pe.parent, nodes.field_body) and pe.parent.index(pe)==0:
+                        lines.append(' '+line)
+                    elif isinstance(pe, nodes.paragraph) and isinstance(pe.parent, nodes.Admonition) and pe.parent.index(pe)==0:
+                        lines.append(' '+line)
+                    elif isinstance(pe, nodes.paragraph) and (isinstance(pe.parent, nodes.footnote) or isinstance(pe.parent, nodes.citation)) and pe.parent.index(pe)==1:
+                        lines.append(' '+line)
+                    elif isinstance(pe, nodes.title) and isinstance(pe.parent, nodes.admonition):
+                        lines.append(' '+line)
+                    elif isinstance(pe, nodes.attribution):
+                        lines.append(indent + '-- ' + line)
+                    elif isinstance(pe, nodes.comment):
+                        lines.append(line)
+                    elif isinstance(pe, nodes.math_block):
+                        lines.append(line)
+                    elif isinstance(pe, nodes.line):
+                        if isinstance(pe.parent, nodes.line_block):
+                            if len(line) > 0 and line[-1]=='\n':
+                                lines.append(line+' '*len(indent))
+                            else:
+                                lines.append(line)
+                            #TODO if len(self.tstack)==0 or self.tstack[-1]=='\n':
+                            #TODO     lines.append(indent+line)
+                            #TODO else:
+                            #TODO     lines.append('<='+self.tstack[-1]+'>'+line)
+                        else:
+                            lines.append('<!>'+line)
+                    else:
+                        if isinstance(pn, nodes.Inline):
+                            #line = "<>"+line+"</>"
+                            pass
+                        ps = node
+                        while (ps.parent != None and ps.parent != pe):
+                            ps = ps.parent
+                        #lines.append(indent+line+"#"+str(i)+",pe="+pe.__class__.__name__+"#")
+                        #x = pe.index(ps)
+                        #lines.append(indent+line+"#"+str(i)+",x="+str(x)+",pe="+pe.__class__.__name__+"#")
+                        if (ps.parent==pe and pe.index(ps) > 0):
+                            lines.append(line)
+                        else:
+                            lines.append(indent+line)
+                else:
+                    if isinstance(pe, nodes.line) and isinstance(pe.parent, nodes.line_block):
+                        if len(line) > 0 and line[-1]=='\n':
+                            lines.append(line+' '*len(indent))
+                        else:
+                            lines.append(line)
+                    else: 
+                        #lines.append(indent+line+"#"+str(i))
+                        lines.append(indent+line)
+                i += 1
 
         # For the `title` node of an `admonition` node, we need to
         # see if there are `class` and `name` attributes.
@@ -735,7 +794,8 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
         self.tstack += "\n"
 
     def visit_line_block(self, node):
-        self.tstack += self.vindent()
+        if not isinstance(node.parent, nodes.line_block):
+            self.tstack += self.vindent()
 
     def visit_line(self, node): self.tstack += Writer.get_indent(node)
     def depart_line(self, node): self.tstack += "\n"
@@ -966,3 +1026,16 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
             self.tstack += self.vindent()
         self.tstack += Writer.get_indent(node.parent)
         self.tstack += '.. [' + label + ']'
+
+    def visit_math_block(self, node):
+        assert len(node.children) == 1
+        p = node.parent
+        ni = p.index(node)
+        self.tstack += self.vindent()
+        if ni==0 or not isinstance(p[ni-1], nodes.math_block):
+            self.tstack += Writer.get_indent(p) + '.. math::'
+            if node[0].astext(): self.tstack += ' '
+        else:
+            self.tstack += '   '
+
+    def depart_math_block(self, node): self.tstack += '\n'
