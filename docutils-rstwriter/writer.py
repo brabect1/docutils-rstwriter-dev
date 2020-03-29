@@ -254,7 +254,13 @@ class Writer(writers.Writer):
             elif isinstance(node, nodes.block_quote):
                 s += "  "
             elif isinstance(node, nodes.literal_block):
-                s += "    "
+                if 'classes' in node and len(node['classes']) > 0:
+                    # The presence of `classes` attribute indicates a code
+                    # block, which needs to have exactly a 3-space indent (this
+                    # seems like a parser deficiency).
+                    s += '   '
+                else:
+                    s += "    "
             elif isinstance(node, nodes.line_block):
                 if isinstance(node.parent, nodes.line_block):
                     s += '  '
@@ -512,7 +518,9 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
                             #TODO else:
                             #TODO     lines.append('<='+self.tstack[-1]+'>'+line)
                         else:
-                            lines.append('<!>'+line)
+                            lines.append(line)
+                    elif isinstance(pn, nodes.literal_block):
+                        lines.append(indent+line)
                     else:
                         if isinstance(pn, nodes.Inline):
                             #line = "<>"+line+"</>"
@@ -626,7 +634,13 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
         ni = p.index(node)
 
         if ni < len(p.children)-1 and isinstance(p[ni+1], nodes.literal_block) and self.tstack[-1] == ':':
-            self.tstack += ':'
+            lb = p[ni+1]
+            if 'classes' in lb and 'code' in lb['classes']:
+                # What follows is a `code` block and so we do
+                # not use `::` at paragraph end
+                self.tstack += '\n'
+            else:
+                self.tstack += ':'
         else:
             self.tstack += '\n'
 
@@ -651,6 +665,10 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
 
     def visit_math(self, node): self.tstack += ':math:`'
     def depart_math(self, node): self.tstack += '`'
+
+    def visit_inline(self, node):
+        if isinstance(node.parent, nodes.literal_block):
+            raise nodes.SkipChildren()
 
     def visit_reference(self, node):
         assert 'name' in node or 'refuri' in node
@@ -800,16 +818,48 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
         if len(node.children)==0:
             self.tstack += Writer.get_indent(node) + "\n"
 
+    literal_block_attr_map = [
+            ('names', 'name'),
+            ('classes', 'class'),
+            ('number-lines', 'number-lines'),
+            ]
+
     def visit_literal_block(self, node):
         p = node.parent
         ni = p.index(node)
         hindent = Writer.get_indent(p)
 
-        if ni == 0 or not isinstance(p[ni-1], nodes.paragraph) or \
+        attr_str = ''
+        for (k,v) in RstCollectVisitor.literal_block_attr_map:
+            if k in node:
+                val = node[k]
+                if isinstance(val,list) and len(val) == 0:
+                    continue
+                elif k == 'classes' and len(val) == 1:
+                    continue
+                attr_str += hindent + '   :' + v + ':'
+                if isinstance(val,list) and len(val) > 0:
+                    if k == 'classes':
+                        # In literal blocks the 1st class is always 'code'
+                        val = val[1:]
+                    attr_str += ' ' + ' '.join(val)
+                elif str(val):
+                    attr_str += ' ' + str(val)
+                attr_str += '\n'
+
+        if len(node.children) > 0 and isinstance(node[0], nodes.inline) and 'ln' in node[0]['classes']:
+            attr_str += hindent + '   :number-lines: ' + node[0].astext().strip() + '\n'
+
+        if attr_str or len(node['classes']) > 0:
+            self.tstack += self.vindent()
+            self.tstack += hindent + ".. code::"
+            if attr_str:
+                self.tstack += '\n' + attr_str[:-1]
+        elif ni == 0 or not isinstance(p[ni-1], nodes.paragraph) or \
                 self.tstack[-2:] != '::':
             
             self.tstack += self.vindent()
-            self.tstack += hindent[:-2] + "::"
+            self.tstack += hindent + "::"
         self.tstack += "\n\n"
 
     def depart_literal_block(self, node):
