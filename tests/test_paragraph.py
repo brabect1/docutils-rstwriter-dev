@@ -122,6 +122,26 @@ with multiple lines.
 """],
 ]
 
+totest['odd_paragraphs'] = [
+# Double colon may alias with literal block start.
+["""\
+A paragraph :: some text
+
+A paragraph::
+some text
+
+A paragraph\\::
+""",
+"""\
+A paragraph :: some text
+
+A paragraph::
+some text
+
+A paragraph\\::
+"""],
+]
+
 
 def load_tests(loader, tests, pattern):
     return suite()

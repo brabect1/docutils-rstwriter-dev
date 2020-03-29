@@ -251,8 +251,10 @@ class Writer(writers.Writer):
             if isinstance(node, nodes.entry):
                 # This signals a table cell, hence we reset the indent.
                 s = ''
-            elif isinstance(node, nodes.block_quote) or isinstance(node, nodes.literal_block):
+            elif isinstance(node, nodes.block_quote):
                 s += "  "
+            elif isinstance(node, nodes.literal_block):
+                s += "    "
             elif isinstance(node, nodes.line_block):
                 if isinstance(node.parent, nodes.line_block):
                     s += '  '
@@ -458,7 +460,8 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
                 s = s.replace(':', '\\:')
             lines.append(Writer.get_indent(pe.parent)+s)
         else:
-            for line in node.astext().splitlines(True):
+            splitlines = node.astext().splitlines(True)
+            for line in splitlines:
                 if pe==pn and isinstance(pe, nodes.paragraph) and len(line) > 0:
                     # We need to escape the escape character.
                     line = line.replace('\\', '\\\\')
@@ -476,7 +479,9 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
                             line = '\\'+line
                         elif re.match(docutils.parsers.rst.states.Body.patterns['enumerator'], line):
                             line = '\\'+line
-                    pass
+
+                    if i == (len(splitlines)-1) and line[-2:] == '::':
+                        line = re.sub('::$', '\\::', line)
 
                 if i==0:
                     if isinstance(pe, nodes.paragraph) and isinstance(pe.parent, nodes.list_item) and pe.parent.index(pe)==0:
@@ -617,7 +622,13 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
         #raise nodes.SkipChildren()
 
     def depart_paragraph(self, node):
-        self.tstack += '\n'
+        p = node.parent
+        ni = p.index(node)
+
+        if ni < len(p.children)-1 and isinstance(p[ni+1], nodes.literal_block) and self.tstack[-1] == ':':
+            self.tstack += ':'
+        else:
+            self.tstack += '\n'
 
     def visit_system_message(self, node):
         #TODO self.tstack += "!!!"
@@ -790,8 +801,16 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
             self.tstack += Writer.get_indent(node) + "\n"
 
     def visit_literal_block(self, node):
-        hindent = Writer.get_indent(node)
-        self.tstack += self.vindent() + hindent[:-2] + "::\n\n"
+        p = node.parent
+        ni = p.index(node)
+        hindent = Writer.get_indent(p)
+
+        if ni == 0 or not isinstance(p[ni-1], nodes.paragraph) or \
+                self.tstack[-2:] != '::':
+            
+            self.tstack += self.vindent()
+            self.tstack += hindent[:-2] + "::"
+        self.tstack += "\n\n"
 
     def depart_literal_block(self, node):
         self.tstack += "\n"
