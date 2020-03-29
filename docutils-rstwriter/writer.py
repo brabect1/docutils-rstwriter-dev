@@ -796,8 +796,43 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
     def depart_literal_block(self, node):
         self.tstack += "\n"
 
+    line_block_attr_map = [
+            ('names', 'name'),
+            ('classes', 'class'),
+            ]
+
     def visit_line_block(self, node):
-        if not isinstance(node.parent, nodes.line_block):
+        indent = Writer.get_indent(node.parent)
+        attr_str = ''
+        for (k,v) in RstCollectVisitor.line_block_attr_map:
+            if k in node:
+                val = node[k]
+                if isinstance(val,list) and len(val) == 0:
+                    continue
+                attr_str += indent + '   :' + v + ':'
+                if isinstance(val,list) and len(val) > 0:
+                    attr_str += ' ' + ' '.join(val)
+                elif str(val):
+                    attr_str += ' ' + str(val)
+                attr_str += '\n'
+
+        if attr_str:
+            self.tstack += self.vindent()
+            self.tstack += indent + '.. line-block::\n' + attr_str + '\n'
+
+            # We need to override the default indent/prefix for child
+            # nodes.
+            node.replace_attr('iprefix', indent)
+            ln_blocks = [ node ];
+            while ln_blocks:
+                n = ln_blocks.pop();
+                indent = n['iprefix']
+                for child in n.children:
+                    child.replace_attr('iprefix', indent+'   ')
+                    if isinstance(child, nodes.line_block):
+                        ln_blocks.append(child)
+
+        elif not isinstance(node.parent, nodes.line_block):
             self.tstack += self.vindent()
 
     def visit_line(self, node): self.tstack += Writer.get_indent(node)

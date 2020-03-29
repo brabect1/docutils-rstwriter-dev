@@ -212,6 +212,74 @@ System messages can appear in place of lines:
 """],
 ]
 
+totest['line_block_directives'] = [
+["""\
+.. line-block::
+
+   This is a line block.
+   Newlines are *preserved*.
+       As is initial whitespace.
+""",
+"""\
+| This is a line block.
+| Newlines are *preserved*.
+|   As is initial whitespace.
+"""],
+["""\
+.. line-block::
+   :class: linear
+   :name:  cit:short
+   \n\
+   This is a line block with options.
+""",
+"""\
+.. line-block::
+   :name: cit:short
+   :class: linear
+
+   This is a line block with options.
+"""],
+["""\
+.. line-block::
+   :class: directive
+
+   Inline markup *may not span
+       multiple lines* of a line block.
+""",
+"""\
+.. line-block::
+   :class: directive
+
+   Inline markup *may not span
+      multiple lines* of a line block.
+"""],
+["""\
+.. line-block::
+   :class: directive
+
+   some text
+
+   .. line-block::
+
+      another
+""",
+"""\
+.. line-block::
+   :class: directive
+
+   some text
+   \n\
+   .. line-block::
+   \n\
+      another
+"""],
+["""\
+.. line-block::
+""",
+"""\
+"""],
+]
+
 
 
 def load_tests(loader, tests, pattern):
