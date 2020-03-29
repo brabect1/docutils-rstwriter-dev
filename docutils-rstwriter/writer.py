@@ -638,6 +638,9 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
     def visit_literal(self, node): self.tstack += '``'
     def depart_literal(self, node): self.tstack += '``'
 
+    def visit_math(self, node): self.tstack += ':math:`'
+    def depart_math(self, node): self.tstack += '`'
+
     def visit_reference(self, node):
         assert 'name' in node or 'refuri' in node
         if 'name' in node:
@@ -1027,15 +1030,41 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
         self.tstack += Writer.get_indent(node.parent)
         self.tstack += '.. [' + label + ']'
 
+    math_block_attr_map = [
+            ('names', 'name'),
+            ('classes', 'class'),
+            ]
+
     def visit_math_block(self, node):
         assert len(node.children) == 1
         p = node.parent
         ni = p.index(node)
+        indent = Writer.get_indent(p)
+
+        attr_str = ''
+        for (k,v) in RstCollectVisitor.math_block_attr_map:
+            if k in node:
+                val = node[k]
+                if isinstance(val,list) and len(val) == 0:
+                    continue
+                attr_str += indent + '   :' + v + ':'
+                if isinstance(val,list) and len(val) > 0:
+                    attr_str += ' ' + ' '.join(val)
+                elif str(val):
+                    attr_str += ' ' + str(val)
+                attr_str += '\n'
+
         self.tstack += self.vindent()
-        if ni==0 or not isinstance(p[ni-1], nodes.math_block):
-            self.tstack += Writer.get_indent(p) + '.. math::'
-            if node[0].astext(): self.tstack += ' '
+        if ni==0 or not isinstance(p[ni-1], nodes.math_block) or attr_str:
+            self.tstack += indent + '.. math::'
+            if attr_str:
+                self.tstack += '\n' + attr_str
+            if node[0].astext():
+                if attr_str:
+                    self.tstack += '\n' + indent + '   '
+                else:
+                    self.tstack += ' '
         else:
-            self.tstack += '   '
+            self.tstack += indent + '   '
 
     def depart_math_block(self, node): self.tstack += '\n'

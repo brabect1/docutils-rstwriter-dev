@@ -33,95 +33,135 @@ totest['argument'] = [
 """],
 ]
 
-#TODO totest['content'] = [
-#TODO ["""\
-#TODO .. math::
-#TODO 
-#TODO   1+1=2
-#TODO """,
-#TODO """\
-#TODO <document source="test data">
-#TODO     <math_block xml:space="preserve">
-#TODO         1+1=2
-#TODO """],
-#TODO ]
+totest['content'] = [
+["""\
+.. math::
 
-#TODO totest['options'] = [
-#TODO ["""\
-#TODO .. math::
-#TODO   :class: new
-#TODO   :name: eq:Eulers law
-#TODO 
-#TODO   e^i*2*\\pi = 1
-#TODO """,
-#TODO """\
-#TODO <document source="test data">
-#TODO     <math_block classes="new" ids="eq-eulers-law" names="eq:eulers\\ law" xml:space="preserve">
-#TODO         e^i*2*\\pi = 1
-#TODO """],
-#TODO ["""\
-#TODO .. math:: z = x+y
-#TODO   :class: new
-#TODO   :name: eq:Eulers law
-#TODO 
-#TODO   e^i*2*\\pi = 1
-#TODO   a = B + c
-#TODO """,
-#TODO """\
-#TODO """],
-#TODO ["""\
-#TODO .. math:: z = x+y
-#TODO   :class: new
-#TODO   :name: eq:z
-#TODO .. math:: a = b *c* d
-#TODO   :class: new
-#TODO   :name: eq:a
-#TODO """,
-#TODO """\
-#TODO """],
-#TODO ]
+  1+1=2
+""",
+"""\
+.. math:: 1+1=2
+"""],
+]
 
-#TODO totest['argument_and_content'] = [
-#TODO ["""\
-#TODO .. math:: y = f(x)
-#TODO 
-#TODO   1+1=2
-#TODO 
-#TODO """,
-#TODO """\
-#TODO <document source="test data">
-#TODO     <math_block xml:space="preserve">
-#TODO         y = f(x)
-#TODO     <math_block xml:space="preserve">
-#TODO         1+1=2
-#TODO """],
-#TODO ]
+totest['options'] = [
+["""\
+.. math::
+  :name: eq:Eulers law
+  :class: new
 
-#TODO totest['content with blank line'] = [
-#TODO ["""\
-#TODO .. math::
-#TODO 
-#TODO   1+1=2
-#TODO   
-#TODO   E = mc^2
-#TODO """,
-#TODO """\
-#TODO <document source="test data">
-#TODO     <math_block xml:space="preserve">
-#TODO         1+1=2
-#TODO     <math_block xml:space="preserve">
-#TODO         E = mc^2
-#TODO """],
-#TODO ]
+  e^i*2*\\pi = 1
+""",
+"""\
+.. math::
+   :name: eq:eulers law
+   :class: new
 
-#TODO totest['math_role'] = [
-#TODO ["""\
-#TODO The area of a circle is :math:`A_\text{c} = (\pi/4) d^2`.
-#TODO """,
-#TODO """\
-#TODO The area of a circle is :math:`A_\text{c} = (\pi/4) d^2`.
-#TODO """],
-#TODO ]
+   e^i*2*\\pi = 1
+"""],
+["""\
+.. math:: z = x+y
+  :name: eq:Eulers law
+
+  e^i*2*\\pi = 1
+  a = B + c
+""",
+"""\
+.. math::
+   :name: eq:eulers law
+
+   z = x+y
+
+   e^i*2*\\pi = 1
+   a = B + c
+"""],
+["""\
+.. math:: z = x+y
+  :class: new
+  :name: eq:Eulers law
+
+  e^i*2*\\pi = 1
+  a = B + c
+""",
+"""\
+.. math::
+   :name: eq:eulers law
+   :class: new
+
+   z = x+y
+
+.. math::
+   :class: new
+
+   e^i*2*\\pi = 1
+   a = B + c
+"""],
+["""\
+.. math:: z = x+y
+   :class: new
+   :name: eq:z
+.. math:: a = b *c* d
+  :class: new
+  :name: eq:a
+""",
+"""\
+.. math::
+   :name: eq:z
+   :class: new
+
+   z = x+y
+
+.. math::
+   :name: eq:a
+   :class: new
+
+   a = b *c* d
+"""],
+]
+
+totest['argument_and_content'] = [
+["""\
+.. math:: y = f(x)
+
+  1+1=2
+
+""",
+"""\
+.. math:: y = f(x)
+
+   1+1=2
+"""],
+]
+
+totest['content with blank line'] = [
+["""\
+.. math::
+
+  1+1=2
+  \n\
+  E = mc^2
+
+  a = b * c
+""",
+"""\
+.. math:: 1+1=2
+
+   E = mc^2
+
+   a = b * c
+"""],
+]
+
+totest['math_role'] = [
+[r"""The area of a circle is :math:`A_\text{c} = (\pi/4) d^2`.
+""",
+r"""The area of a circle is :math:`A_\text{c} = (\pi/4) d^2`.
+"""],
+[r"""The area of a circle is `A_\text{c} = (\pi/4) d^2`:math:.
+""",
+r"""The area of a circle is :math:`A_\text{c} = (\pi/4) d^2`.
+"""],
+]
 
 
 def load_tests(loader, tests, pattern):
