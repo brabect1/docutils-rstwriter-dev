@@ -532,6 +532,12 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
                         #x = pe.index(ps)
                         #lines.append(indent+line+"#"+str(i)+",x="+str(x)+",pe="+pe.__class__.__name__+"#")
                         if (ps.parent==pe and pe.index(ps) > 0):
+                            ##x=pe.index(ps)
+                            ##x=pe[x-1].astext()
+                            ##x=x[-1]=='\n' or x[-1]=='\r'
+                            #lines.append('<!'+str(pe.index(ps))+'/'+str(x)+'>'+line)
+                            ##if x: lines.append(indent+line)
+                            ##else: lines.append(line)
                             lines.append(line)
                         else:
                             lines.append(indent+line)
@@ -650,22 +656,33 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
         #TODO self.tstack += "!!!"
         raise nodes.SkipChildren()
 
+    def visit_inline_markup(self, node, markup):
+        p = node.parent
+        ni = p.index(node)
+        if ni > 0 and not (isinstance(p,nodes.line)):
+            prev_text_end = p[ni-1].astext()[-1]
+            need_indent = prev_text_end=='\n' or prev_text_end=='\r'
+            if need_indent:
+                self.tstack += Writer.get_indent(p)
+
+        self.tstack += markup
+
     def visit_attribution(self, node): self.tstack += self.vindent()
     def depart_attribution(self, node): self.tstack += '\n'
 
     def visit_field_name(self, node): self.tstack += ':'
     def depart_field_name(self, node): self.tstack += ':'
 
-    def visit_strong(self, node): self.tstack += '**'
+    def visit_strong(self, node): self.visit_inline_markup(node,'**')
     def depart_strong(self, node): self.tstack += '**'
 
-    def visit_emphasis(self, node): self.tstack += '*'
+    def visit_emphasis(self, node): self.visit_inline_markup(node,'*')
     def depart_emphasis(self, node): self.tstack += '*'
 
-    def visit_literal(self, node): self.tstack += '``'
+    def visit_literal(self, node): self.visit_inline_markup(node,'``')
     def depart_literal(self, node): self.tstack += '``'
 
-    def visit_math(self, node): self.tstack += ':math:`'
+    def visit_math(self, node): self.visit_inline_markup(node,':math:`')
     def depart_math(self, node): self.tstack += '`'
 
     def visit_inline(self, node):
