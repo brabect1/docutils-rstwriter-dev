@@ -53,14 +53,14 @@ totest['bullet_lists_with_inlines'] = [
 ["""\
 - 1st para
 
-  2nd para
+  *2nd* para
   ``with`` multiline and *inline*
   **text**
 """,
 """\
 - 1st para
 
-  2nd para
+  *2nd* para
   ``with`` multiline and *inline*
   **text**
 """],
