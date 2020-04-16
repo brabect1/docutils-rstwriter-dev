@@ -860,6 +860,9 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
         elif ni == 0 or not isinstance(p[ni-1], nodes.paragraph) or \
                 self.tstack[-2:] != '::':
             
+            if ni > 0 and isinstance(p, nodes.list_item):
+                hindent = ' '*len(hindent)
+
             self.tstack += self.vindent()
             self.tstack += hindent + "::"
         self.tstack += "\n\n"
