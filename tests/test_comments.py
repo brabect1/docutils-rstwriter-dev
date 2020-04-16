@@ -66,10 +66,18 @@ Paragraph.
 """,
 """\
 .. A comment.
-
 .. Another.
 
 Paragraph.
+"""],
+["""\
+.. A comment.
+
+.. Another.
+""",
+"""\
+.. A comment.
+.. Another.
 """],
 ["""\
 .. A comment
@@ -112,7 +120,6 @@ Paragraph.
 """,
 """\
 .. A comment.
-
 .. Another.
 
 no blank line
@@ -192,7 +199,6 @@ the parser from recognizing a substitution definition.
 """\
 .. Next is an empty comment, which serves to end this comment and
    prevents the following block quote being swallowed up.
-
 .. 
 
   A block quote.

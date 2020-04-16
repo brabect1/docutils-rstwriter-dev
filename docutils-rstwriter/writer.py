@@ -910,8 +910,12 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
     def depart_line(self, node): self.tstack += "\n"
 
     def visit_comment(self, node):
+        p = node.parent
+        ni = p.index(node)
         #self.tstack += self.vindent() + Writer.get_indent(node.parent) + ".. "
-        self.tstack += self.vindent() + ' '*len(Writer.get_indent(node.parent)) + ".. "
+        if ni==0 or not isinstance(p[ni-1], nodes.comment):
+            self.tstack += self.vindent()
+        self.tstack += ' '*len(Writer.get_indent(node.parent)) + ".. "
 
     def depart_comment(self, node): self.tstack += "\n"
 
