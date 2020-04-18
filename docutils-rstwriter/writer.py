@@ -490,7 +490,7 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
                         line = re.sub('::$', '\\::', line)
 
                 if i==0:
-                    if isinstance(pe, nodes.paragraph) and isinstance(pe.parent, nodes.list_item) and pe.parent.index(pe)==0:
+                    if isinstance(pe, nodes.paragraph) and isinstance(pe.parent, nodes.list_item):
                         lines.append(line)
                         #lines.append(Writer.get_indent(pe.parent)+line+"#"+str(i))
                     elif isinstance(pe, nodes.paragraph) and isinstance(pe.parent, nodes.field_body) and pe.parent.index(pe)==0:
@@ -631,6 +631,8 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
             # For 2nd+ paragraph in a list item we need to add a vertical
             # space.
             self.tstack += self.vindent()
+            if isinstance(p, nodes.list_item):
+                self.tstack += Writer.get_indent(node)
         elif p.index(node) == 0 and isinstance(p, nodes.list_item):
             self.tstack += Writer.get_indent(p)
         #else: self.tstack += '\n'

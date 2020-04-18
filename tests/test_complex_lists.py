@@ -56,6 +56,9 @@ totest['bullet_lists_with_inlines'] = [
   *2nd* para
   ``with`` multiline and *inline*
   **text**
+
+  :math:`2*x` and :math:`3*y` in
+  :math:`3rd` ``paragraph``
 """,
 """\
 - 1st para
@@ -63,6 +66,9 @@ totest['bullet_lists_with_inlines'] = [
   *2nd* para
   ``with`` multiline and *inline*
   **text**
+
+  :math:`2*x` and :math:`3*y` in
+  :math:`3rd` ``paragraph``
 """],
 ]
 
