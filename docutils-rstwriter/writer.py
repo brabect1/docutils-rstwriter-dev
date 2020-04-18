@@ -495,10 +495,10 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
                         #lines.append(Writer.get_indent(pe.parent)+line+"#"+str(i))
                     elif isinstance(pe, nodes.paragraph) and isinstance(pe.parent, nodes.field_body) and pe.parent.index(pe)==0:
                         lines.append(' '+line)
-                    elif isinstance(pe, nodes.paragraph) and isinstance(pe.parent, nodes.Admonition) and pe.parent.index(pe)==0:
-                        lines.append(' '+line)
-                    elif isinstance(pe, nodes.paragraph) and (isinstance(pe.parent, nodes.footnote) or isinstance(pe.parent, nodes.citation)) and pe.parent.index(pe)==1:
-                        lines.append(' '+line)
+                    elif isinstance(pe, nodes.paragraph) and isinstance(pe.parent, nodes.Admonition):
+                        lines.append(line)
+                    elif isinstance(pe, nodes.paragraph) and (isinstance(pe.parent, nodes.footnote) or isinstance(pe.parent, nodes.citation)):
+                        lines.append(line)
                     elif isinstance(pe, nodes.title) and isinstance(pe.parent, nodes.admonition):
                         lines.append(' '+line)
                     elif isinstance(pe, nodes.attribution):
@@ -631,10 +631,15 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
             # For 2nd+ paragraph in a list item we need to add a vertical
             # space.
             self.tstack += self.vindent()
-            if isinstance(p, nodes.list_item):
+            if isinstance(p, nodes.list_item) or isinstance(p, nodes.Admonition) or isinstance(p, nodes.footnote) or isinstance(p, nodes.citation):
                 self.tstack += Writer.get_indent(node)
-        elif p.index(node) == 0 and isinstance(p, nodes.list_item):
-            self.tstack += Writer.get_indent(p)
+        elif (p.index(node) == 1 and (isinstance(p, nodes.footnote) or isinstance(p, nodes.citation))):
+            self.tstack += ' '
+        elif p.index(node) == 0:
+            if isinstance(p, nodes.list_item):
+                self.tstack += Writer.get_indent(p)
+            elif isinstance(p, nodes.Admonition):
+                self.tstack += ' '
         #else: self.tstack += '\n'
         #self.tstack += node.astext()
         #raise nodes.SkipChildren()
