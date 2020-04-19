@@ -507,6 +507,8 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
                         lines.append(line)
                     elif isinstance(pe, nodes.math_block):
                         lines.append(line)
+                    elif isinstance(pe, nodes.paragraph) and isinstance(pe.parent, nodes.block_quote):
+                        lines.append(line)
                     elif isinstance(pe, nodes.line):
                         if isinstance(pe.parent, nodes.line_block):
                             if len(line) > 0 and line[-1]=='\n':
@@ -617,7 +619,7 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
 
     def visit_paragraph(self, node):
         p = node.parent
-        if not (isinstance(p, nodes.list_item) or isinstance(p, nodes.field_body) or isinstance(p, nodes.Admonition) or isinstance(p, nodes.footnote) or isinstance(p, nodes.citation)):
+        if not (isinstance(p, nodes.list_item) or isinstance(p, nodes.field_body) or isinstance(p, nodes.Admonition) or isinstance(p, nodes.footnote) or isinstance(p, nodes.citation) or isinstance(p, nodes.block_quote)):
             # For all but a paragraph in certain elements add a vertical space
             # before the paragraph. The special elements are:
             # - list_item's
@@ -626,6 +628,9 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
             # - footnotes
             # - citations
             self.tstack += self.vindent()
+        elif isinstance(p, nodes.block_quote):
+            self.tstack += self.vindent()
+            self.tstack += Writer.get_indent(p)
         elif p.index(node) != 0 and \
                 not (p.index(node) == 1 and (isinstance(p, nodes.footnote) or isinstance(p, nodes.citation))):
             # For 2nd+ paragraph in a list item we need to add a vertical
