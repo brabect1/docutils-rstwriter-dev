@@ -25,68 +25,30 @@ def suite():
 
 totest = {}
 
-totest['block_quotes_with_inlines'] = [
+totest['line_block_with_inlines'] = [
 ["""\
-Line 1.
-Line 2.
-
-  *1st* indented *text*
-  *with* multiple *lines*.
-
-  *And* with *multiple*
-  *paragraphs*.
-
-    **2nd** indented **text**
-    **with** multiple **lines**.
-
-    **And** with **multiple**
-    **paragraphs**.
+| *Initial* indentation is **also** significant and ``preserved:``
+|
+|     **Indented** 4 spaces
+| *Not* indented
+|   ``Indented`` 2 ``spaces``
+|     Indented 4 spaces
+|  Only one space
+|
+|     *Continuation* lines may be indented less
+  *than* their *base* lines.
 """,
 """\
-Line 1.
-Line 2.
-
-  *1st* indented *text*
-  *with* multiple *lines*.
-
-  *And* with *multiple*
-  *paragraphs*.
-
-    **2nd** indented **text**
-    **with** multiple **lines**.
-
-    **And** with **multiple**
-    **paragraphs**.
-"""],
-["""\
-Paragraph.
-
-   Block quote.
-
-   -- *Attribution* that **is**
-      **multi** on *multiple* lines
-
-     Block quote.
-
-     --*Attribution* on *multiple*
-       **lines**
-
-Paragraph.
-""",
-"""\
-Paragraph.
-
-  Block quote.
-
-  -- *Attribution* that **is**
-  **multi** on *multiple* lines
-
-    Block quote.
-
-    -- *Attribution* on *multiple*
-    **lines**
-
-Paragraph.
+| *Initial* indentation is **also** significant and ``preserved:``
+| \n\
+|   **Indented** 4 spaces
+| *Not* indented
+|     ``Indented`` 2 ``spaces``
+|       Indented 4 spaces
+|   Only one space
+|   \n\
+|     *Continuation* lines may be indented less
+      *than* their *base* lines.
 """],
 ]
 

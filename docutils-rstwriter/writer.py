@@ -494,7 +494,9 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
                         lines.append(line)
                         #lines.append(Writer.get_indent(pe.parent)+line+"#"+str(i))
                     elif isinstance(pe, nodes.paragraph) and isinstance(pe.parent, nodes.field_body) and pe.parent.index(pe)==0:
-                        lines.append(' '+line)
+                        lines.append(line)
+                    elif isinstance(pe, nodes.field_name):
+                        lines.append(line)
                     elif isinstance(pe, nodes.paragraph) and isinstance(pe.parent, nodes.Admonition):
                         lines.append(line)
                     elif isinstance(pe, nodes.paragraph) and (isinstance(pe.parent, nodes.footnote) or isinstance(pe.parent, nodes.citation)):
@@ -502,7 +504,7 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
                     elif isinstance(pe, nodes.title) and isinstance(pe.parent, nodes.admonition):
                         lines.append(' '+line)
                     elif isinstance(pe, nodes.attribution):
-                        lines.append(indent + '-- ' + line)
+                        lines.append(line)
                     elif isinstance(pe, nodes.comment):
                         lines.append(line)
                     elif isinstance(pe, nodes.math_block):
@@ -679,10 +681,15 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
 
         self.tstack += markup
 
-    def visit_attribution(self, node): self.tstack += self.vindent()
+    def visit_attribution(self, node): self.tstack += self.vindent()+Writer.get_indent(node)+'-- '
     def depart_attribution(self, node): self.tstack += '\n'
 
-    def visit_field_name(self, node): self.tstack += ':'
+    def visit_field_body(self, node):
+        if len(node.children)==0: self.tstack += '\n'
+        elif isinstance(node[0], nodes.paragraph): self.tstack += ' '
+
+    def visit_field_name(self, node): self.tstack += Writer.get_indent(node)+':'
+    #TODO def visit_field_name(self, node): self.visit_inline_markup(node,':')
     def depart_field_name(self, node): self.tstack += ':'
 
     def visit_strong(self, node): self.visit_inline_markup(node,'**')
@@ -693,6 +700,9 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
 
     def visit_literal(self, node): self.visit_inline_markup(node,'``')
     def depart_literal(self, node): self.tstack += '``'
+
+    def visit_title_reference(self, node): self.visit_inline_markup(node,'`')
+    def depart_title_reference(self, node): self.tstack += '`'
 
     def visit_math(self, node): self.visit_inline_markup(node,':math:`')
     def depart_math(self, node): self.tstack += '`'
@@ -838,6 +848,10 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
             self.tstack += '`'
 
     def visit_classifier(self, node): self.tstack += ' : '
+
+    def visit_field_list(self, node):
+        #if node.parent.index(node) == 0: self.tstack += self.vindent()
+        self.tstack += self.vindent()
 
     def visit_definition_list_item(self, node):
         if node.parent.index(node) == 0: self.tstack += self.vindent()
