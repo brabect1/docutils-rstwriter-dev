@@ -12,8 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""rstflat package."""
-from writer import Writer  # Required for docutils.core.publish_cmdline() to
-                           # find the writer matching "rstflat".
-from ExtendedImageDirective import ExtendedImageDirective
-from ExtendedFigureDirective import ExtendedFigureDirective
+from docutils.parsers.rst.directives.images import Figure
+
+class ExtendedFigureDirective(Figure):
+
+    def run(self):
+        # This adds the `source` pointing to the path of the source RST file
+        self.options['source'] = self.state_machine.input_lines.source(self.lineno - self.state_machine.input_offset - 1)
+
+        # now call the default directive processing (of the super class)
+        return super(ExtendedFigureDirective,self).run()
+

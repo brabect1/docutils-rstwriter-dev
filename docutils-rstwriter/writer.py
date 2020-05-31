@@ -27,6 +27,7 @@ import re
 import roman
 import textwrap
 import tableclass
+import os.path
 
 import docutils
 from docutils import frontend, nodes, utils, writers, languages, io
@@ -42,6 +43,8 @@ except ImportError:
     from docutils.math.latex2mathml import parse_latex_math
     from docutils.math.math2html import math2html
 
+from urlparse import urlparse; # python2
+#from urllib.parse import urlparse; # python3
 
 class Options(object):
     """Options for rst to rst conversion."""
@@ -1090,17 +1093,30 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
             ]
 
     def visit_image(self, node):
+        src_path = None
+        if 'source' in node: src_path = node['source']
+
         p = node.parent
         if isinstance(p, nodes.figure):
             directive = 'figure'
             p = p.parent
         else:
             directive = 'image'
+
         if not isinstance(p, nodes.list_item):
             self.tstack += self.vindent()
+
+        # resolve image path
+        img_path = node['uri']
+        url = urlparse( img_path, scheme='file' )
+        if url[0] == 'file':
+            img_path = url[2]
+            if not os.path.isabs(img_path) and src_path:
+                img_path = os.path.join( os.path.dirname(src_path), img_path )
+
         self.tstack += Writer.get_indent(p)
         self.tstack += ".. " + directive + ':: ' \
-                + node['uri'] + '\n'
+                + img_path + '\n'
 
         indent = Writer.get_indent(node)
 

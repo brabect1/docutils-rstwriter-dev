@@ -21,6 +21,15 @@ except:
     pass
 
 from docutils.core import publish_cmdline, default_description
+from docutils.core import publish_cmdline, default_description
+from docutils.parsers.rst import directives
+
+# Work around due to improper module naming: https://stackoverflow.com/questions/7583652/python-module-with-a-dash-or-hyphen-in-its-name
+docutils_rstwriter = __import__("docutils-rstwriter")
+
+# This overrides what directive class will be used to process the `image` directive
+directives._directives['image'] = docutils_rstwriter.ExtendedImageDirective
+directives._directives['figure'] = docutils_rstwriter.ExtendedFigureDirective
 
 description = ('Generates RST documents from standalone reStructuredText '
                'sources.  ' + default_description)
