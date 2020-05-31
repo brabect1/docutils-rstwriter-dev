@@ -104,6 +104,14 @@ class Writer(writers.Writer):
         writers.Writer.__init__(self)
         self.options = Options()
 
+    # Override parent method to add latex-specific transforms
+    def get_transforms(self):
+        # get the default writer transforms
+        transforms = writers.Writer.get_transforms(self)
+        #TODO for t in transforms:
+        #TODO     print str(t)
+        return transforms
+
     def translate(self):
         self.abc()
         self.output = "<class=" + self.document.__class__.__name__ + ">\n";
@@ -271,7 +279,10 @@ class Writer(writers.Writer):
                     s += "| "
             elif isinstance(node, nodes.list_item):
                 if isinstance(node.parent, nodes.bullet_list):
-                    s += node.parent.get("bullet")+" "
+                    p = node.parent
+                    b = '-'
+                    if 'bullet' in p: b = p['bullet']
+                    s += b + " "
                 elif isinstance(node.parent, nodes.enumerated_list):
                     p = node.parent
                     enumtype = p.get("enumtype")
@@ -715,7 +726,8 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
             raise nodes.SkipChildren()
 
     def visit_reference(self, node):
-        assert 'name' in node or 'refuri' in node
+        assert 'name' in node or 'refuri' in node or 'refid' in node
+
         if 'name' in node:
             if 'refuri' in node:
                 self.tstack += '`'
@@ -726,6 +738,8 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
                     self.tstack += '`'
         elif 'refuri' in node:
             pass
+        elif 'refid' in node:
+            self.tstack += '`'
 
         # save the text stack and reset it (to empty)
         self.push_tstack()
@@ -762,6 +776,8 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
                 self.tstack += '_'
         elif 'refuri' in node:
             pass
+        elif 'refid' in node:
+            self.tstack += '`_'
 
         # restore the last text stack and append the present contents to it
         self.pop_tstack()
@@ -1240,3 +1256,20 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
             self.tstack += indent + '   '
 
     def depart_math_block(self, node): self.tstack += '\n'
+
+    def visit_topic(self, node):
+        assert 'classes' in node
+        topic = node['classes'][0]
+        #TODO print ">> " + topic + " <<"
+
+        if topic == 'contents':
+            self.tstack += self.vindent() + '.. contents::'
+            if isinstance( node.children[0], nodes.title ):
+                name = node.children[0].astext()
+                if name != 'Contents':
+                    self.tstack += ' ' + name
+            self.tstack += '\n'
+            raise nodes.SkipChildren()
+        else:
+            pass
+
