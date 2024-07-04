@@ -26,7 +26,6 @@ __docformat__ = 'reStructuredText'
 import re
 import roman
 import textwrap
-import tableclass
 import os.path
 
 import docutils
@@ -43,8 +42,13 @@ except ImportError:
     from docutils.math.latex2mathml import parse_latex_math
     from docutils.math.math2html import math2html
 
-from urlparse import urlparse; # python2
-#from urllib.parse import urlparse; # python3
+import sys
+if sys.version_info[0] > 2:
+    from urllib.parse import urlparse; # python3
+    from . import tableclass
+else:
+    from urlparse import urlparse; # python2
+    import tableclass
 
 class Options(object):
     """Options for rst to rst conversion."""

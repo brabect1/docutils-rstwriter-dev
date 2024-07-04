@@ -22,6 +22,10 @@ import unittest
 import docutils
 from docutils.core import publish_string, default_description
 
+import sys
+if sys.version_info[0] >= 3:
+    unicode = str
+
 class MyWriterTestcase(unittest.TestCase, docutils.SettingsSpec):
 
     def test_pass(self):

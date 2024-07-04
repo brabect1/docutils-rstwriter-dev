@@ -27,6 +27,9 @@ from docutils.parsers.rst import roles
 import difflib
 import re
 
+if sys.version_info[0] >= 3:
+    unicode = str
+
 def _format_str(*args):
     r"""
     Return a tuple containing representations of all args.
