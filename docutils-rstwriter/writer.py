@@ -422,6 +422,16 @@ class Writer(writers.Writer):
         else:
             return ''
 
+
+class ExternalHandler(object):
+
+    def handle_visit(self, visitor, node):
+        return False
+
+    def handle_depart(self, visitor, node):
+        return False
+
+
 class RstCollectVisitor(nodes.SparseNodeVisitor):
 
     def __init__(self, document, options):
@@ -435,7 +445,16 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
         self.table_rowcells = []
         self.table_tstacks = []
         self.ref_ids = None
+        self.extern_handlers = [];
         nodes.SparseNodeVisitor.__init__(self, document)
+
+    def add_extern_handler(self, handler):
+        if handler is not None and handler not in self.extern_handlers:
+            self.extern_handlers.append(handler);
+
+    def remove_extern_handler(self, handler):
+        if handler is not None and handler in self.extern_handlers:
+            self.extern_handlers.remove(handler);
 
     def vindent(self):
         if len(self.tstack)==0: return ''
@@ -448,6 +467,42 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
     def pop_tstack(self):
         if len(self.tstack_stack) > 0:
             self.tstack = self.tstack_stack.pop() + self.tstack
+
+    def unknown_visit(self, node):
+        """
+        Overrides the parent `unknown_visit()` by relaying to external handlers,
+        if any of them can handle visitting the `node`.
+
+        Would raise an exception unless one of the registered handlers resolves
+        the visit.
+        """
+        handled = False;
+        for h in self.extern_handlers:
+            handled = h.handle_visit(self, node);
+            if handled: break;
+
+        if  (not handled and (self.document.settings.strict_visitor
+             or node.__class__.__name__ not in self.optional)):
+            raise NotImplementedError(
+                '%s visiting unknown node type: %s'
+                % (self.__class__, node.__class__.__name__))
+
+    def unknown_departure(self, node):
+        """
+        Called before exiting unknown `Node` types.
+
+        Raise exception unless overridden.
+        """
+        handled = False;
+        for h in self.extern_handlers:
+            handled = h.handle_depart(self, node);
+            if handled: break;
+
+        if  (not handled and (self.document.settings.strict_visitor
+             or node.__class__.__name__ not in self.optional)):
+            raise NotImplementedError(
+                '%s departing unknown node type: %s'
+                % (self.__class__, node.__class__.__name__))
 
     def visit_document(self, node):
         if 'title' in node:
