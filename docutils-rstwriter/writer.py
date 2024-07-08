@@ -117,27 +117,27 @@ class Writer(writers.Writer):
         return transforms
 
     def translate(self):
-        self.abc()
-        self.output = "<class=" + self.document.__class__.__name__ + ">\n";
-        self.output = self.xyz()
+        self.update_formatting_attrs()
+        ## self.output = "<class=" + self.document.__class__.__name__ + ">\n";
+        ## self.output = self.xyz()
 
-        s = "";
-        for i in self.document.traverse():
-            if isinstance(i, nodes.title) or isinstance(i, nodes.subtitle):
-                x = i.astext();
-                s += x + "\n" + ("-" * len(x)) + "\n\n"
-            elif isinstance(i, nodes.Text):
-                indent = self.get_indent(i.parent)
-                lines = [indent+line for line in i.astext().splitlines()]
-                if lines:
-                    s += '\n'.join(lines) + '\n'
-            elif isinstance(i, nodes.paragraph):
-                p = i.parent
-                if not isinstance(p, nodes.list_item): s += '\n'
-            elif isinstance(i, nodes.list_item):
-                if i.parent.index(i) == 0: s += "\n"
+        ## s = "";
+        ## for i in self.document.traverse():
+        ##     if isinstance(i, nodes.title) or isinstance(i, nodes.subtitle):
+        ##         x = i.astext();
+        ##         s += x + "\n" + ("-" * len(x)) + "\n\n"
+        ##     elif isinstance(i, nodes.Text):
+        ##         indent = self.get_indent(i.parent)
+        ##         lines = [indent+line for line in i.astext().splitlines()]
+        ##         if lines:
+        ##             s += '\n'.join(lines) + '\n'
+        ##     elif isinstance(i, nodes.paragraph):
+        ##         p = i.parent
+        ##         if not isinstance(p, nodes.list_item): s += '\n'
+        ##     elif isinstance(i, nodes.list_item):
+        ##         if i.parent.index(i) == 0: s += "\n"
 
-        self.output = s
+        ## self.output = s
 
         visitor = RstCollectVisitor(self.document, self.options)
         self.document.walkabout(visitor)
@@ -374,7 +374,18 @@ class Writer(writers.Writer):
                             ids_hash[refid] = name
             return ids_hash
 
-    def abc(self):
+    def update_formatting_attrs(self):
+        '''
+        Assigns section level and identention prefix attributes to certain document
+        tree node classes.
+
+        The method assigns the section level, ``hlevel`` attribute, to title-like nodes.
+        This then helps to determine the title formatting (i.e. the underline type)
+        during the output formatting.
+
+        Element type nodes receive the indentation prefix, the ``iprefix`` attribute.
+        This again helps formatting proper indentation during output.
+        '''
         for i in self.document.traverse():
             if isinstance(i, nodes.title):
                 i.replace_attr("hlevel", Writer.get_sec_level(i.parent))
