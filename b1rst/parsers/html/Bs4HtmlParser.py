@@ -14,6 +14,8 @@
 
 
 import bs4
+import docutils.nodes
+import docutils.utils
 
 class HtmlParser(object):
     """Represents a base class of a HTML parser producing a docutils document tree."""
@@ -27,7 +29,7 @@ class HtmlParser(object):
         return {}
 
 
-class Bs4CommonlineHandler(object):
+class Bs4DefaultHandler(object):
 
     def canHandle(self):
         return ('i', 'emph', 'b', 'strong', 'tt', 'code', 'hmtl', 'body', 'div', 'p')
@@ -39,15 +41,15 @@ class Bs4CommonlineHandler(object):
         for e in element.children: nodes.extend(bs4HtmlParser.parseBs4(e))
 
         if t in ('i', 'emph',):
-            return ['*' + ' '.join(nodes) +'*']
+            return [docutils.nodes.emphasis('', '', *nodes)]
         elif t in ('b', 'strong',):
-            return ['**' + ' '.join(nodes) +'**']
+            return [docutils.nodes.strong('', '', *nodes)]
         elif t in ('tt', 'code',):
-            return ['``' + ' '.join(nodes) +'``']
+            return [docutils.nodes.literal('', '', *nodes)]
         elif t == 'p':
-            return [''.join(nodes)]
+            return [docutils.nodes.paragraph('', '', *nodes)]
         elif t in ('html', 'body','div',):
-            return [' '.join(nodes)]
+            return nodes
         else:
             raise ValueError(f"Cannot handle '<{t}>' elements!")
 
@@ -59,7 +61,7 @@ class Bs4HtmlParser(HtmlParser):
         self.opts = opts or self.getDefaultOptions()
         self.handlers = {}
 
-        defaultHandler = Bs4CommonlineHandler()
+        defaultHandler = Bs4DefaultHandler()
         for tag in defaultHandler.canHandle():
             self.handlers[tag] = defaultHandler
 
@@ -81,8 +83,10 @@ class Bs4HtmlParser(HtmlParser):
 
         if element is None: return None
 
+        document = None
         if isinstance(element, bs4.BeautifulSoup):
             elements = element.children
+            document = docutils.utils.new_document('', None)
         else:
             elements = [element]
 
@@ -92,21 +96,26 @@ class Bs4HtmlParser(HtmlParser):
                 t = element.name
                 if t in self.handlers: nodes.extend(self.handlers[t].handle(element,self))
             elif isinstance(element, bs4.NavigableString):
-                nodes.append(element.string)
+                nodes.append(docutils.nodes.Text(element.string))
             elif isinstance(element, bs4.Comment):
-                lines = element.string.split('\n')
-                s = '.. ' + lines[0]
-                if len(lines) > 1:
-                    s += '\n   ' + '\n   '.join(lines[1:])
-                nodes.append(s)
+                pass
+                #lines = element.string.split('\n')
+                #s = '.. ' + lines[0]
+                #if len(lines) > 1:
+                #    s += '\n   ' + '\n   '.join(lines[1:])
+                #nodes.append(s)
             else:
                 raise TypeError(f"Expecting bs4 type but got '{element.__class__.__name__}'")
 
-        return nodes
+        if document is not None:
+            document.extend(nodes)
+            return document
+        else:
+            return nodes
 
 
 parser = Bs4HtmlParser()
-html="""<p>This is <b>some</b> test text.</p><p>THis is 2nd paragraph.</p>"""
-nodes = parser.parse(html)
-print('\n\n'.join(nodes))
+html="""<p>This is <b>some <i>bold</i> test</b> text.</p><p>THis is 2nd paragraph. Here we have <tt>literal</tt> text. Let's see if <tt>literal <b>can</b> contain</tt> some other inline elements.</p>"""
+document = parser.parse(html)
+print(document.pformat())
 
