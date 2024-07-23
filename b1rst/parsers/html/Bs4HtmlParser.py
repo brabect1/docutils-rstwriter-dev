@@ -118,4 +118,22 @@ parser = Bs4HtmlParser()
 html="""<p>This is <b>some <i>bold</i> test</b> text.</p><p>THis is 2nd paragraph. Here we have <tt>literal</tt> text. Let's see if <tt>literal <b>can</b> contain</tt> some other inline elements.</p>"""
 document = parser.parse(html)
 print(document.pformat())
+print(20*'=')
 
+import docutils.writers
+import docutils.io
+import docutils.frontend
+writer_class = docutils.writers.get_writer_class('html')
+##option_parser = self.setup_option_parser(
+##    usage, description, settings_spec, config_section, **defaults)
+#option_parser = self.setup_option_parser(settings_spec=writer_class.settings_spec)
+#settings = option_parser.get_default_values()
+writer = writer_class()
+option_parser = docutils.frontend.OptionParser(
+    components=(writer,),
+    read_config_files=False,
+    description='')
+settings = option_parser.parse_args()
+document.settings = settings
+output = writer.write(document, docutils.io.StringOutput(encoding='utf8'))
+print(output)
