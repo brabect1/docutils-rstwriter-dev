@@ -207,15 +207,14 @@ class Bs4HtmlParser(HtmlParser):
             if isinstance(element, bs4.Tag):
                 t = element.name
                 if t in self.handlers: nodes.extend(self.handlers[t].handle(element,self))
+            elif isinstance(element, bs4.Comment):
+                # Note: `bs4.Comment` is a subclass of `bs4.NavigableString` and hence
+                # the former class test must precede the latter class test
+                text = element.string
+                comment = docutils.nodes.comment(text, text)
+                nodes.append(comment)
             elif isinstance(element, bs4.NavigableString):
                 nodes.append(docutils.nodes.Text(element.string))
-            elif isinstance(element, bs4.Comment):
-                pass
-                #lines = element.string.split('\n')
-                #s = '.. ' + lines[0]
-                #if len(lines) > 1:
-                #    s += '\n   ' + '\n   '.join(lines[1:])
-                #nodes.append(s)
             else:
                 raise TypeError(f"Expecting bs4 type but got '{element.__class__.__name__}'")
 
@@ -229,6 +228,11 @@ class Bs4HtmlParser(HtmlParser):
 parser = Bs4HtmlParser()
 html="""<p>This is <b>some <i>bold</i> test</b> text.</p><p>THis is 2nd paragraph. Here we have <tt>literal</tt> text. Let's see if <tt>literal <b>can</b> contain</tt> some other inline elements.</p>"""
 html="""
+<!-- source: https://www.w3schools.com/html/html_table_colspan_rowspan.asp
+and so ....
+
+... show must go on -->
+
 <table>
 <tbody><tr>
 <th colspan="3">2022</th>
