@@ -33,7 +33,7 @@ class HtmlParser(object):
 class Bs4DefaultHandler(object):
 
     def canHandle(self):
-        return ('i', 'emph', 'b', 'strong', 'tt', 'code', 'hmtl', 'body', 'div', 'p')
+        return ('i', 'emph', 'b', 'strong', 'tt', 'code', 'hmtl', 'body', 'div', 'p', 'a')
 
 
     def handle(self, element, bs4HtmlParser):
@@ -49,6 +49,21 @@ class Bs4DefaultHandler(object):
             return [docutils.nodes.literal('', '', *nodes)]
         elif t == 'p':
             return [docutils.nodes.paragraph('', '', *nodes)]
+        elif t == 'a':
+            if element.has_attr('name'):
+                #TODO for now ignoring old way of creating an anchor target
+                return [docutils.nodes.paragraph('', '', *nodes)]
+            elif element.has_attr('href'):
+                #TODO for now assuming an URL target
+                if len(nodes) == 1 and isinstance(nodes[0], docutils.nodes.Text):
+                    name = nodes[0].astext()
+                    #TODO for now doing no escape of `name` argument - this would form
+                    #     a target ID and would likely be properly escaped
+                    reference = docutils.nodes.reference('', name, name=name)
+                    reference['refuri'] = element['href']
+                    reference['anonymous'] = 1
+                    return [reference]
+            raise NotImplementedError(str(element))
         elif t in ('html', 'body','div',):
             return nodes
         else:
@@ -219,6 +234,13 @@ class Bs4HtmlParser(HtmlParser):
                 raise TypeError(f"Expecting bs4 type but got '{element.__class__.__name__}'")
 
         if document is not None:
+            # docutils 0.16: reference type nodes are expected to be inside a TextElement parent
+            directRefs = [n for n in nodes if isinstance(n, docutils.nodes.reference)]
+            if len(directRefs) > 0:
+                p = docutils.nodes.paragraph()
+                p.extend(nodes)
+                nodes = [p]
+
             document.extend(nodes)
             return document
         else:
@@ -257,6 +279,7 @@ and so ....
 </tbody>
 </table>
 """
+html = """And don't forget to <a href="https://www.w3schools.com">Visit W3Schools.com!</a>"""
 document = parser.parse(html)
 print(document.pformat())
 print(20*'=')
