@@ -14,12 +14,15 @@
 
 
 import bs4
+import docutils.parsers
 import docutils.nodes
 import docutils.utils
 import re
 
-class HtmlParser(object):
+class HtmlParser(docutils.parsers.Parser):
     """Represents a base class of a HTML parser producing a docutils document tree."""
+
+    supported = ('html')
 
     def getDefaultOptions(self):
         """Gets parser's default options.
@@ -180,6 +183,10 @@ class Bs4TableHandler(object):
 
 class Bs4HtmlParser(HtmlParser):
 
+    settings_spec = (
+        'HTML Parser Options',
+        None,
+        ())
 
     def __init__(self, opts=None):
         self.opts = opts or self.getDefaultOptions()
@@ -192,16 +199,21 @@ class Bs4HtmlParser(HtmlParser):
             for tag in handler.canHandle():
                 self.handlers[tag] = handler
 
-    def parse(self, html):
+    def parse(self, inputstring, document):
+        self.parseHtml(inputstring, document)
+        print(document.pformat())
+
+
+    def parseHtml(self, html, document=None):
         parser = None
         if self.opts and 'html_parser' in self.opts:
             parser = self.opts['html_parser']
         parser = parser or 'html.parser'
         soup = bs4.BeautifulSoup(html, parser)
-        return self.parseBs4(soup)
+        return self.parseBs4(soup, document)
 
 
-    def parseBs4(self, element):
+    def parseBs4(self, element, document=None):
         """Parses a BeautifulSoup element.
 
         Raise
@@ -210,10 +222,10 @@ class Bs4HtmlParser(HtmlParser):
 
         if element is None: return None
 
-        document = None
         if isinstance(element, bs4.BeautifulSoup):
             elements = element.children
-            document = docutils.utils.new_document('', None)
+            if document is None:
+                document = docutils.utils.new_document('', None)
         else:
             elements = [element]
 
@@ -280,7 +292,11 @@ and so ....
 </table>
 """
 html = """And don't forget to <a href="https://www.w3schools.com">Visit W3Schools.com!</a>"""
-document = parser.parse(html)
+document = parser.parseHtml(html)
+print(document.pformat())
+print(20*'=')
+document = docutils.utils.new_document('', None)
+parser.parse(html, document)
 print(document.pformat())
 print(20*'=')
 
