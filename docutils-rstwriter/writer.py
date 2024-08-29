@@ -24,7 +24,10 @@
 __docformat__ = 'reStructuredText'
 
 import re
-import roman
+try:
+    import roman
+except ImportError:
+    import docutils.utils.roman as roman
 import textwrap
 import os.path
 
@@ -1337,7 +1340,14 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
             if isinstance( node.children[0], nodes.title ):
                 name = node.children[0].astext()
                 if name != 'Contents':
-                    self.tstack += ' ' + name
+                    indent = Writer.get_indent(node)
+                    first = True
+                    for line in name.split('\n'):
+                        if first:
+                            self.tstack += ' ' + line
+                            first = False
+                        else:
+                            self.tstack += '\n   ' + indent + line
             self.tstack += '\n'
             raise nodes.SkipChildren()
         else:

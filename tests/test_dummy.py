@@ -44,7 +44,7 @@ This is my text.
               writer_name='docutils-rstwriter',
               settings_spec=self,
               settings_overrides={})
-        self.assertEqual(output, input)
+        self.assertEqual(output.decode(), input)
 
     def test_unicode_cmp(self):
         s1 =  u'\u2022 BULLET'
