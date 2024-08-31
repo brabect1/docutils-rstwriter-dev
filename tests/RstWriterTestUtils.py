@@ -296,12 +296,21 @@ class WriterPublishTestCase(CustomTestCase, docutils.SettingsSpec):
                                   'strict_visitor': True,
                                   #TODO 'halt_level': 5,
                                   'report_level': 5}
-    writer_name = '' # set in subclasses or constructor
-
     def __init__(self, *args, **kwargs):
+        self.writer_name = '' # set in subclasses or constructor
         if 'writer_name' in kwargs:
             self.writer_name = kwargs['writer_name']
             del kwargs['writer_name']
+        # `writer_class` is not used for this test case class, but we want to
+        # remove it from `kwargs` passed downstream to `CustomTestCase`
+        if 'writer_class' in kwargs: del kwargs['writer_class']
+        self.parser_name = '' # set in subclasses or constructor
+        if 'parser_name' in kwargs:
+            self.parser_name = kwargs['parser_name']
+            del kwargs['parser_name']
+        # `parser_class` is not used for this test case class, but we want to
+        # remove it from `kwargs` passed downstream to `CustomTestCase`
+        if 'parser_class' in kwargs: del kwargs['parser_class']
         CustomTestCase.__init__(self, *args, **kwargs)
 
     def test_publish(self):
@@ -310,7 +319,7 @@ class WriterPublishTestCase(CustomTestCase, docutils.SettingsSpec):
         output = docutils.core.publish_string(
               source=self.input,
               reader_name='standalone',
-              parser_name='restructuredtext',
+              parser_name=self.parser_name or 'restructuredtext',
               writer_name=self.writer_name,
               settings_spec=self,
               settings_overrides=self.suite_settings)
@@ -328,12 +337,24 @@ class WriterNoTransformTestCase(WriterPublishTestCase):
                                   'strict_visitor': True,
                                   #TODO 'halt_level': 5,
                                   'report_level': 5}
-    writer_name = '' # set in subclasses or constructor
 
     def __init__(self, *args, **kwargs):
+        self.writer_name = '' # set in subclasses or constructor
         if 'writer_name' in kwargs:
             self.writer_name = kwargs['writer_name']
             del kwargs['writer_name']
+        self.writer_class = None
+        if 'writer_class' in kwargs:
+            self.writer_class = kwargs['writer_class']
+            del kwargs['writer_class']
+        self.parser_name = 'restructuredtext'
+        if 'parser_name' in kwargs:
+            self.parser_name = kwargs['parser_name']
+            del kwargs['parser_name']
+        self.parser_class = None
+        if 'parser_class' in kwargs:
+            self.parser_class = kwargs['parser_class']
+            del kwargs['parser_class']
         CustomTestCase.__init__(self, *args, **kwargs)
 
     def test_publish(self):
@@ -341,7 +362,7 @@ class WriterNoTransformTestCase(WriterPublishTestCase):
             pdb.set_trace()
 
         # instantiate a parser
-        comp_class = docutils.parsers.get_parser_class('restructuredtext')
+        comp_class = self.parser_class or docutils.parsers.get_parser_class(self.parser_name)
         parser = comp_class()
 
         # instantiate a reader
@@ -349,7 +370,7 @@ class WriterNoTransformTestCase(WriterPublishTestCase):
         reader = comp_class()
 
         # instantiate a writer
-        writer_class = docutils.writers.get_writer_class(self.writer_name)
+        writer_class = self.writer_class or docutils.writers.get_writer_class(self.writer_name)
         writer = writer_class()
 
         # initialize document settings
@@ -379,13 +400,6 @@ class WriterNoTransformTestCase(WriterPublishTestCase):
         # write output
         output = writer.write(document, destination)
         writer.assemble_parts()
-        #output = docutils.core.publish_string(
-        #      source=self.input,
-        #      reader_name='standalone',
-        #      parser_name='restructuredtext',
-        #      writer_name=,
-        #      settings_spec=self,
-        #      settings_overrides=settings_overrides)
 
         # compare actual and expected output
         self.compare_output(self.input, output, self.expected)
@@ -393,13 +407,17 @@ class WriterNoTransformTestCase(WriterPublishTestCase):
 
 class PublishTestSuite(CustomTestSuite):
 
-    def __init__(self, writer_name, test_class=WriterPublishTestCase, suite_settings=None):
+    def __init__(self, writer_name, test_class=WriterPublishTestCase, suite_settings=None,
+            writer_class=None, parser_name='restructuredtext', parser_class=None):
         """
         `writer_name` is the name of the writer to use.
         """
         CustomTestSuite.__init__(self, suite_settings=suite_settings)
         self.test_class = test_class
         self.writer_name = writer_name
+        self.writer_class = writer_class
+        self.parser_name = parser_name
+        self.parser_class = parser_class
 
     def generateTests(self, dict, dictname='totest'):
         for name, cases in dict.items():
@@ -417,5 +435,8 @@ class PublishTestSuite(CustomTestSuite):
                       id='%s[%r][%s]' % (dictname, name, casenum),
                       run_in_debugger=run_in_debugger,
                       # Passed to constructor of self.test_class:
-                      writer_name=self.writer_name)
+                      writer_name=self.writer_name,
+                      writer_class=self.writer_class,
+                      parser_name=self.parser_name,
+                      parser_class=self.parser_class)
 
