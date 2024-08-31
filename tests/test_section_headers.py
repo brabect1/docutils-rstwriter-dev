@@ -705,12 +705,20 @@ Yo
 
 Ho
 """,
+# Two notes about the reference output:
+# # The first `..` in the `Ho` heading gets interpretted as a comment. Because of (default)
+#   document transforms, this comment record gets pushed down under the `Yo` heading.
+# # Also, because of document transforms, the `Yo` heading gets transformed into a sub-title
+#   node with an empty `rawsource` attribute. Hence the underline of the `Yo` heading becomes
+#   twice the length of the simple text representation of that heading.
 """\
 Hi
 ==
 
 Yo
 ----
+
+.. 
 
 Ho
 """],

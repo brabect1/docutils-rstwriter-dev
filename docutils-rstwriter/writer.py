@@ -24,9 +24,11 @@
 __docformat__ = 'reStructuredText'
 
 import re
-import roman
+try:
+    import roman
+except ImportError:
+    import docutils.utils.roman as roman
 import textwrap
-import tableclass
 import os.path
 
 import docutils
@@ -43,8 +45,13 @@ except ImportError:
     from docutils.math.latex2mathml import parse_latex_math
     from docutils.math.math2html import math2html
 
-from urlparse import urlparse; # python2
-#from urllib.parse import urlparse; # python3
+import sys
+if sys.version_info[0] > 2:
+    from urllib.parse import urlparse; # python3
+    from . import tableclass
+else:
+    from urlparse import urlparse; # python2
+    import tableclass
 
 class Options(object):
     """Options for rst to rst conversion."""
@@ -113,27 +120,27 @@ class Writer(writers.Writer):
         return transforms
 
     def translate(self):
-        self.abc()
-        self.output = "<class=" + self.document.__class__.__name__ + ">\n";
-        self.output = self.xyz()
+        self.update_formatting_attrs()
+        ## self.output = "<class=" + self.document.__class__.__name__ + ">\n";
+        ## self.output = self.xyz()
 
-        s = "";
-        for i in self.document.traverse():
-            if isinstance(i, nodes.title) or isinstance(i, nodes.subtitle):
-                x = i.astext();
-                s += x + "\n" + ("-" * len(x)) + "\n\n"
-            elif isinstance(i, nodes.Text):
-                indent = self.get_indent(i.parent)
-                lines = [indent+line for line in i.astext().splitlines()]
-                if lines:
-                    s += '\n'.join(lines) + '\n'
-            elif isinstance(i, nodes.paragraph):
-                p = i.parent
-                if not isinstance(p, nodes.list_item): s += '\n'
-            elif isinstance(i, nodes.list_item):
-                if i.parent.index(i) == 0: s += "\n"
+        ## s = "";
+        ## for i in self.document.traverse():
+        ##     if isinstance(i, nodes.title) or isinstance(i, nodes.subtitle):
+        ##         x = i.astext();
+        ##         s += x + "\n" + ("-" * len(x)) + "\n\n"
+        ##     elif isinstance(i, nodes.Text):
+        ##         indent = self.get_indent(i.parent)
+        ##         lines = [indent+line for line in i.astext().splitlines()]
+        ##         if lines:
+        ##             s += '\n'.join(lines) + '\n'
+        ##     elif isinstance(i, nodes.paragraph):
+        ##         p = i.parent
+        ##         if not isinstance(p, nodes.list_item): s += '\n'
+        ##     elif isinstance(i, nodes.list_item):
+        ##         if i.parent.index(i) == 0: s += "\n"
 
-        self.output = s
+        ## self.output = s
 
         visitor = RstCollectVisitor(self.document, self.options)
         self.document.walkabout(visitor)
@@ -370,7 +377,18 @@ class Writer(writers.Writer):
                             ids_hash[refid] = name
             return ids_hash
 
-    def abc(self):
+    def update_formatting_attrs(self):
+        '''
+        Assigns section level and identention prefix attributes to certain document
+        tree node classes.
+
+        The method assigns the section level, ``hlevel`` attribute, to title-like nodes.
+        This then helps to determine the title formatting (i.e. the underline type)
+        during the output formatting.
+
+        Element type nodes receive the indentation prefix, the ``iprefix`` attribute.
+        This again helps formatting proper indentation during output.
+        '''
         for i in self.document.traverse():
             if isinstance(i, nodes.title):
                 i.replace_attr("hlevel", Writer.get_sec_level(i.parent))
@@ -407,6 +425,16 @@ class Writer(writers.Writer):
         else:
             return ''
 
+
+class ExternalHandler(object):
+
+    def handle_visit(self, visitor, node):
+        return False
+
+    def handle_depart(self, visitor, node):
+        return False
+
+
 class RstCollectVisitor(nodes.SparseNodeVisitor):
 
     def __init__(self, document, options):
@@ -420,7 +448,16 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
         self.table_rowcells = []
         self.table_tstacks = []
         self.ref_ids = None
+        self.extern_handlers = [];
         nodes.SparseNodeVisitor.__init__(self, document)
+
+    def add_extern_handler(self, handler):
+        if handler is not None and handler not in self.extern_handlers:
+            self.extern_handlers.append(handler);
+
+    def remove_extern_handler(self, handler):
+        if handler is not None and handler in self.extern_handlers:
+            self.extern_handlers.remove(handler);
 
     def vindent(self):
         if len(self.tstack)==0: return ''
@@ -433,6 +470,42 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
     def pop_tstack(self):
         if len(self.tstack_stack) > 0:
             self.tstack = self.tstack_stack.pop() + self.tstack
+
+    def unknown_visit(self, node):
+        """
+        Overrides the parent `unknown_visit()` by relaying to external handlers,
+        if any of them can handle visitting the `node`.
+
+        Would raise an exception unless one of the registered handlers resolves
+        the visit.
+        """
+        handled = False;
+        for h in self.extern_handlers:
+            handled = h.handle_visit(self, node);
+            if handled: break;
+
+        if  (not handled and (self.document.settings.strict_visitor
+             or node.__class__.__name__ not in self.optional)):
+            raise NotImplementedError(
+                '%s visiting unknown node type: %s'
+                % (self.__class__, node.__class__.__name__))
+
+    def unknown_departure(self, node):
+        """
+        Called before exiting unknown `Node` types.
+
+        Raise exception unless overridden.
+        """
+        handled = False;
+        for h in self.extern_handlers:
+            handled = h.handle_depart(self, node);
+            if handled: break;
+
+        if  (not handled and (self.document.settings.strict_visitor
+             or node.__class__.__name__ not in self.optional)):
+            raise NotImplementedError(
+                '%s departing unknown node type: %s'
+                % (self.__class__, node.__class__.__name__))
 
     def visit_document(self, node):
         if 'title' in node:
@@ -1267,7 +1340,14 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
             if isinstance( node.children[0], nodes.title ):
                 name = node.children[0].astext()
                 if name != 'Contents':
-                    self.tstack += ' ' + name
+                    indent = Writer.get_indent(node)
+                    first = True
+                    for line in name.split('\n'):
+                        if first:
+                            self.tstack += ' ' + line
+                            first = False
+                        else:
+                            self.tstack += '\n   ' + indent + line
             self.tstack += '\n'
             raise nodes.SkipChildren()
         else:

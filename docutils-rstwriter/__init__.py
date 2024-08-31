@@ -13,7 +13,14 @@
 # limitations under the License.
 
 """rstflat package."""
-from writer import Writer  # Required for docutils.core.publish_cmdline() to
-                           # find the writer matching "rstflat".
-from ExtendedImageDirective import ExtendedImageDirective
-from ExtendedFigureDirective import ExtendedFigureDirective
+import sys
+if sys.version_info[0] > 2:
+    from .writer import Writer  # Required for docutils.core.publish_cmdline() to
+                                # find the writer matching "rstflat".
+    from .ExtendedImageDirective import ExtendedImageDirective
+    from .ExtendedFigureDirective import ExtendedFigureDirective
+else:
+    from writer import Writer  # Required for docutils.core.publish_cmdline() to
+                               # find the writer matching "rstflat".
+    from ExtendedImageDirective import ExtendedImageDirective
+    from ExtendedFigureDirective import ExtendedFigureDirective

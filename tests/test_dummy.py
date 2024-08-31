@@ -22,6 +22,10 @@ import unittest
 import docutils
 from docutils.core import publish_string, default_description
 
+import sys
+if sys.version_info[0] >= 3:
+    unicode = str
+
 class MyWriterTestcase(unittest.TestCase, docutils.SettingsSpec):
 
     def test_pass(self):
@@ -40,7 +44,7 @@ This is my text.
               writer_name='docutils-rstwriter',
               settings_spec=self,
               settings_overrides={})
-        self.assertEqual(output, input)
+        self.assertEqual(output.decode(), input)
 
     def test_unicode_cmp(self):
         s1 =  u'\u2022 BULLET'

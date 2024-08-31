@@ -373,7 +373,7 @@ class tableclass(object):
                     try:
                         assert rule[m] in ('-', '+', '=', '|')
                     except AssertionError:
-                        print 'rule[' + str(m) + ']=\'' + rule[m] + '\''
+                        print('rule[' + str(m) + ']=\'' + rule[m] + '\'')
                         raise
                     if rule[m] != '|':
                         rule[m] = '+'
@@ -473,5 +473,5 @@ if __name__ == '__main__':
     cells.append( SimpleCell('5.5') )
     t.add_row(cells)
 
-    print "---"
-    print t.format()
+    print("---")
+    print(t.format())
