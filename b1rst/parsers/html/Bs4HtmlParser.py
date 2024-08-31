@@ -35,8 +35,10 @@ class HtmlParser(docutils.parsers.Parser):
 
 class Bs4DefaultHandler(object):
 
+    headings = ('h1', 'h2', 'h3', 'h4', 'h5', 'h6')
+
     def canHandle(self):
-        return ('i', 'emph', 'b', 'strong', 'tt', 'code', 'hmtl', 'body', 'div', 'p', 'a')
+        return ('i', 'emph', 'b', 'strong', 'tt', 'code', 'html', 'body', 'div', 'p', 'a') #TODO + self.headings
 
 
     def handle(self, element, bs4HtmlParser):
@@ -69,6 +71,9 @@ class Bs4DefaultHandler(object):
             raise NotImplementedError(str(element))
         elif t in ('html', 'body','div',):
             return nodes
+        elif t in self.headings:
+            #TODO: ignore for now
+            return []
         else:
             raise ValueError(f"Cannot handle '<{t}>' elements!")
 
@@ -78,13 +83,13 @@ class Bs4TableHandler(object):
     whitespace = re.compile(r'^\s*$')
 
     def canHandle(self):
-        return ('table', 'tbody', 'tr', 'th', 'td')
+        return ('table', 'tbody', 'thead', 'tr', 'th', 'td', 'colgroup', 'col')
 
 
     def handle(self, element, bs4HtmlParser):
         t = element.name
 
-        if t in ('table', 'tbody',):
+        if t == 'table':
             # sanity check for 'row' type HTML elements
             unsupported = [e for e in element.children if self.isUnsupportedTableElement(e)]
             if len(unsupported) > 0:
@@ -93,8 +98,8 @@ class Bs4TableHandler(object):
             nodes = []
             for e in [c for c in element.children if isinstance(c, bs4.Tag)]: nodes.extend(bs4HtmlParser.parseBs4(e))
 
-            if t == 'table' and len(nodes) == 1 and isinstance(nodes[0], docutils.nodes.table):
-                return nodes
+##            if t == 'table' and len(nodes) == 1 and isinstance(nodes[0], docutils.nodes.table):
+##                return nodes
 
             # sanity check for 'row' type doctree subnodes
             unsupported = [n for n in nodes if not isinstance(n, docutils.nodes.row)]
@@ -130,6 +135,12 @@ class Bs4TableHandler(object):
             table += tgroup
 
             return [table]
+
+        elif t in ('thead', 'tbody',):
+            nodes = []
+            for e in [c for c in element.children if isinstance(c, bs4.Tag)]: nodes.extend(bs4HtmlParser.parseBs4(e))
+            return nodes
+
         elif t == 'tr':
             # sanity check for 'cell' type HTML elements
             unsupported = [e for e in element.children if self.isUnsupportedRowElement(e)]
@@ -147,6 +158,7 @@ class Bs4TableHandler(object):
             row = docutils.nodes.row()
             row.extend(nodes)
             return [row]
+
         elif t in ('td', 'th',):
             attributes = {}
             if element.has_attr('rowspan') and int(element['rowspan']) > 1:
@@ -163,20 +175,24 @@ class Bs4TableHandler(object):
                     else:
                         cell.append(n)
             return [cell]
+
+        elif t in ('colgroup', 'col',): # ignored HTML tags/elements
+            return []
+
         else:
             raise ValueError(f"Cannot handle '<{t}>' elements!")
 
 
     def isUnsupportedRowElement(self, e):
         return (
-                (isinstance(e, bs4.Tag) and e.name not in ('th','td',)) or
+                (isinstance(e, bs4.Tag) and e.name not in ('th', 'td',)) or
                 (isinstance(e, bs4.NavigableString) and Bs4TableHandler.whitespace.match(e.string) is None)
                 )
 
 
     def isUnsupportedTableElement(self, e):
         return (
-                (isinstance(e, bs4.Tag) and e.name not in ('tbody','tr',)) or
+                (isinstance(e, bs4.Tag) and e.name not in ('tbody', 'tr', 'thead', 'colgroup')) or
                 (isinstance(e, bs4.NavigableString) and Bs4TableHandler.whitespace.match(e.string) is None)
                 )
 
@@ -201,7 +217,7 @@ class Bs4HtmlParser(HtmlParser):
 
     def parse(self, inputstring, document):
         self.parseHtml(inputstring, document)
-        print(document.pformat())
+        #TODO print(document.pformat())
 
 
     def parseHtml(self, html, document=None):
@@ -233,7 +249,11 @@ class Bs4HtmlParser(HtmlParser):
         for element in elements:
             if isinstance(element, bs4.Tag):
                 t = element.name
-                if t in self.handlers: nodes.extend(self.handlers[t].handle(element,self))
+                if t in self.handlers:
+                    nodes.extend(self.handlers[t].handle(element,self))
+                else:
+                    #TODO add a system message about unsupported HTML tag
+                    pass
             elif isinstance(element, bs4.Comment):
                 # Note: `bs4.Comment` is a subclass of `bs4.NavigableString` and hence
                 # the former class test must precede the latter class test
