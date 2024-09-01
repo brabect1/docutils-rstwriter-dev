@@ -125,68 +125,69 @@ document:
 ]
 
 
-## totest['paragraphs_odd_starts'] = [
-## # Aliasing with a line block
-## ["""\
-## \\| This is not a line block.
-## | The vertical bar is simply part of a paragraph.
-## """,
-## """\
-## document:
-##   attrs:
-##     source: <string>
-##   children:
-##   - paragraph:
-##       children:
-##       - '| This is not a line block.
-## 
-##         | The vertical bar is simply part of a paragraph.'
-## """],
-## # Aliasing with a block quote
-## [r"""\ This is not a block quote
-## \ with multiple lines.
-## 
-## \  This is not a block quote
-## \  with multiple lines.
-## 
-## \   This is not a block quote
-## \   with multiple lines.
-## """,
-## r"""document:
-##   attrs:
-##     source: <string>
-##   children:
-##   - paragraph:
-##       children:
-##       - 'This is not a block quote
-## 
-##         with multiple lines.'
-##   - paragraph:
-##       children:
-##       - " This is not a block quote\n with multiple lines."
-##   - paragraph:
-##       children:
-##       - "  This is not a block quote\n  with multiple lines."
-## """],
-## # Aliasing with a bullet list item
-## ["""\
-## \\- This is not a bullet list.
-## 
-## \\* This is not a bullet list.
-## """,
-## """\
-## document:
-##   attrs:
-##     source: <string>
-##   children:
-##   - paragraph:
-##       children:
-##       - '- This is not a bullet list.'
-##   - paragraph:
-##       children:
-##       - '* This is not a bullet list.'
-## """],
-## ]
+totest['paragraphs_odd_starts'] = [
+# Aliasing with a line block
+["""\
+<p>| This is not a line block.
+| The vertical bar is simply part of a paragraph.
+</p>
+""",
+"""\
+document:
+  attrs:
+    source: <string>
+  children:
+  - paragraph:
+      children:
+      - '| This is not a line block.
+
+        | The vertical bar is simply part of a paragraph.'
+"""],
+# Aliasing with a block quote
+[r"""
+<p>This is not a block quote
+with multiple lines.</p>
+
+<p> This is not a block quote
+ with multiple lines.</p>
+<p>  This is not a block quote
+  with multiple lines.</p>
+""",
+r"""document:
+  attrs:
+    source: <string>
+  children:
+  - paragraph:
+      children:
+      - 'This is not a block quote
+
+        with multiple lines.'
+  - paragraph:
+      children:
+      - " This is not a block quote\n with multiple lines."
+  - paragraph:
+      children:
+      - "  This is not a block quote\n  with multiple lines."
+"""],
+# Aliasing with a bullet list item
+["""\
+<p>- This is not a bullet list.</p>
+
+<p>* This is not a bullet list.</p>
+""",
+"""\
+document:
+  attrs:
+    source: <string>
+  children:
+  - paragraph:
+      children:
+      - '- This is not a bullet list.'
+  - paragraph:
+      children:
+      - '* This is not a bullet list.'
+"""],
+]
 
 
 totest['odd_paragraphs'] = [
@@ -197,7 +198,7 @@ totest['odd_paragraphs'] = [
 <p>A paragraph::
 some text</p>
 
-<p>A paragraph\\::</p>
+<p>A paragraph::</p>
 """,
 """\
 document:
@@ -215,6 +216,187 @@ document:
   - paragraph:
       children:
       - 'A paragraph::'
+"""],
+]
+
+
+# The following test cases exercise different HTML representations for the semantically
+# same text.
+totest['paragraph_variants'] = [
+["""\
+<p>Paragraph 1a.</p>
+<p>Paragraph 2a.</p>
+""",
+"""\
+document:
+  attrs:
+    source: <string>
+  children:
+  - paragraph:
+      children:
+      - Paragraph 1a.
+  - paragraph:
+      children:
+      - Paragraph 2a.
+"""],
+["""\
+<p>Paragraph 1b.</p><p>Paragraph 2b.</p>\
+""",
+"""\
+document:
+  attrs:
+    source: <string>
+  children:
+  - paragraph:
+      children:
+      - Paragraph 1b.
+  - paragraph:
+      children:
+      - Paragraph 2b.
+"""],
+["""\
+<p>Paragraph 1c.</p>
+
+<p>Paragraph 2c.</p>
+""",
+"""\
+document:
+  attrs:
+    source: <string>
+  children:
+  - paragraph:
+      children:
+      - Paragraph 1c.
+  - paragraph:
+      children:
+      - Paragraph 2c.
+"""],
+["""\
+<html>
+<body>
+<p>Paragraph 1d.</p>
+<p>Paragraph 2d.</p>
+</body>
+</html>
+""",
+"""\
+document:
+  attrs:
+    source: <string>
+  children:
+  - paragraph:
+      children:
+      - Paragraph 1d.
+  - paragraph:
+      children:
+      - Paragraph 2d.
+"""],
+["""\
+<html><p>Paragraph 1e.</p>
+<p>Paragraph 2e.</p>
+</html>
+""",
+"""\
+document:
+  attrs:
+    source: <string>
+  children:
+  - paragraph:
+      children:
+      - Paragraph 1e.
+  - paragraph:
+      children:
+      - Paragraph 2e.
+"""],
+["""\
+Paragraph 1f.
+
+<p>Paragraph 2f.</p>
+""",
+"""\
+document:
+  attrs:
+    source: <string>
+  children:
+  - Paragraph 1f.
+  - paragraph:
+      children:
+      - Paragraph 2f.
+"""],
+]
+
+
+# Empty paragraphs
+totest['paragraph_empty'] = [
+["""\
+<p>Paragraph 1.</p>
+<p/>
+<p>Paragraph 2.</p>
+""",
+"""\
+document:
+  attrs:
+    source: <string>
+  children:
+  - paragraph:
+      children:
+      - Paragraph 1.
+  - paragraph:
+      children:
+      - ''
+  - paragraph:
+      children:
+      - Paragraph 2.
+"""],
+["""
+<p></p><p/>
+
+<p/>
+""",
+"""\
+document:
+  attrs:
+    source: <string>
+  children:
+  - paragraph:
+      children:
+      - ''
+  - paragraph:
+      children:
+      - ''
+  - paragraph:
+      children:
+      - ''
+"""],
+["""
+<p>  </p>
+<p>  
+  
+</p>
+""",
+"""\
+document:
+  attrs:
+    source: <string>
+  children:
+  - paragraph:
+      children:
+      - ''
+  - paragraph:
+      children:
+      - ''
+"""],
+["""
+<p>&nbsp;</p>
+""",
+"""\
+document:
+  attrs:
+    source: <string>
+  children:
+  - paragraph:
+      children:
+      - ''
 """],
 ]
 

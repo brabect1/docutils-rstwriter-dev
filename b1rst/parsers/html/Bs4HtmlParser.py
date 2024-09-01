@@ -53,6 +53,8 @@ class Bs4DefaultHandler(object):
         elif t in ('tt', 'code',):
             return [docutils.nodes.literal('', '', *nodes)]
         elif t == 'p':
+            # Special case: empty parahraphs (e.g. `<p/>`)
+            if len(nodes) == 0: nodes = [docutils.nodes.Text('')]
             return [docutils.nodes.paragraph('', '', *nodes)]
         elif t == 'a':
             if element.has_attr('name'):
@@ -81,6 +83,8 @@ class Bs4DefaultHandler(object):
 class Bs4TableHandler(object):
 
     whitespace = re.compile(r'^\s*$')
+
+    blankline = re.compile(r'^$')
 
     def canHandle(self):
         return ('table', 'tbody', 'thead', 'tr', 'th', 'td', 'colgroup', 'col')
@@ -261,7 +265,9 @@ class Bs4HtmlParser(HtmlParser):
                 comment = docutils.nodes.comment(text, text)
                 nodes.append(comment)
             elif isinstance(element, bs4.NavigableString):
-                nodes.append(docutils.nodes.Text(element.string))
+                s = element.string
+                if Bs4TableHandler.whitespace.match(s) is None:
+                    nodes.append(docutils.nodes.Text(re.sub('\n+$', '', s)))
             else:
                 raise TypeError(f"Expecting bs4 type but got '{element.__class__.__name__}'")
 
