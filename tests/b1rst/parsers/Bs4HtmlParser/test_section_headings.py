@@ -31,6 +31,94 @@ totest = {}
 
 totest['section_headers'] = [
 ["""\
+<h1>H1</h1>
+""",
+"""\
+document:
+  attrs:
+    source: <string>
+  children:
+  - section:
+      children:
+      - title:
+          children:
+          - H1
+"""],
+["""\
+<h2>H2</h2>
+""",
+"""\
+document:
+  attrs:
+    source: <string>
+  children:
+  - section:
+      children:
+      - title:
+          children:
+          - H2
+"""],
+["""\
+<h1>H1</h1>
+<h2>H2</h2>
+""",
+"""\
+document:
+  attrs:
+    source: <string>
+  children:
+  - section:
+      children:
+      - title:
+          children:
+          - H1
+      - section:
+          children:
+          - title:
+              children:
+              - H2
+"""],
+["""\
+<h1>H1a</h1>
+<h1>H1b</h1>
+""",
+"""\
+document:
+  attrs:
+    source: <string>
+  children:
+  - section:
+      children:
+      - title:
+          children:
+          - H1a
+  - section:
+      children:
+      - title:
+          children:
+          - H1b
+"""],
+["""\
+<h2>H2</h2>
+<h1>H1</h1>
+""",
+"""\
+document:
+  attrs:
+    source: <string>
+  children:
+  - section:
+      children:
+      - title:
+          children:
+          - H2
+  - section:
+      children:
+      - title:
+          children:
+          - H1
+"""],
+["""\
 <h1>Title</h1>
 
 <p>Paragraph.</p>

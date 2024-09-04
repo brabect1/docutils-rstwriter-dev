@@ -34,7 +34,7 @@ totest = {}
 #
 totest['emphasis'] = [
 ["""\
-<emph>emphasis</emph>
+<emph>emphasis emph</emph>
 """,
 """\
 document:
@@ -43,10 +43,10 @@ document:
   children:
   - emphasis:
       children:
-      - emphasis
+      - emphasis emph
 """],
 ["""\
-<i>emphasis</i>
+<i>emphasis i</i>
 """,
 """\
 document:
@@ -55,7 +55,7 @@ document:
   children:
   - emphasis:
       children:
-      - emphasis
+      - emphasis i
 """],
 ["""\
 <emph>multi
@@ -158,7 +158,7 @@ document:
 #
 totest['strong'] = [
 ["""\
-<b>strong</b>
+<b>strong b</b>
 """,
 """\
 document:
@@ -167,7 +167,19 @@ document:
   children:
   - strong:
       children:
-      - strong
+      - strong b
+"""],
+["""\
+<strong>strong strong</strong>
+""",
+"""\
+document:
+  attrs:
+    source: <string>
+  children:
+  - strong:
+      children:
+      - strong strong
 """],
 ["""\
 <b>multi
@@ -246,7 +258,7 @@ document:
 #
 totest['literal'] = [
 ["""\
-<tt>literal</tt>
+<tt>literal tt</tt>
 """,
 """\
 document:
@@ -255,7 +267,19 @@ document:
   children:
   - literal:
       children:
-      - literal
+      - literal tt
+"""],
+["""\
+<code>literal code</code>
+""",
+"""\
+document:
+  attrs:
+    source: <string>
+  children:
+  - literal:
+      children:
+      - literal code
 """],
 ["""\
 <tt>multi

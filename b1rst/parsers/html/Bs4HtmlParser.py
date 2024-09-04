@@ -33,49 +33,171 @@ class HtmlParser(docutils.parsers.Parser):
         return {}
 
 
+class HtmlParserContext(object):
+
+    def getDocNode(self):
+        raise NotImplementedError()
+
+    def getHtmlElement(self):
+        raise NotImplementedError()
+
+
+class Bs4ParserContext(HtmlParserContext):
+
+    class InnerContext(HtmlParserContext):
+
+        def __init__(self, node, element):
+            self.node = node
+            self.element = element
+
+        def getDocNode(self):
+            return self.node
+
+        def getHtmlElement(self):
+            return self.element
+
+    def __init__(self, node, element):
+        context = self.InnerContext(node, element)
+        self.stack = [context]
+
+    def getDocNode(self):
+        if len(self.stack) == 0: return None
+        return self.stack[-1].getDocNode()
+
+    def getHtmlElement(self):
+        if len(self.stack) == 0: return None
+        return self.stack[-1].getHtmlElement()
+
+    def pushContext(self, node, element):
+        context = self.InnerContext(node, element)
+        self.stack.append(context)
+
+    def popContext(self):
+        self.stack.pop()
+
+    def peekContext(self, depth=1):
+        if not isinstance(depth, int) or depth < 1:
+            raise ValueError(f'Unexpected depth: {depth}')
+
+        if len(self.stack) < depth: return self.InnerContext(None, None)
+        return self.stack[-(depth+1)]
+
+
 class Bs4DefaultHandler(object):
 
     headings = ('h1', 'h2', 'h3', 'h4', 'h5', 'h6')
 
+    inline = ('i', 'emph', 'b', 'strong', 'tt', 'code')
+
     def canHandle(self):
-        return ('i', 'emph', 'b', 'strong', 'tt', 'code', 'html', 'body', 'div', 'p', 'a') #TODO + self.headings
+        return self.inline + ('html', 'body', 'div', 'p', 'a') + self.headings
 
 
-    def handle(self, element, bs4HtmlParser):
+    def handle(self, element, bs4HtmlParser, context):
+        assert isinstance(context, Bs4ParserContext) #TODO turn to proper exception type
         t = element.name
-        nodes = []
-        for e in element.children: nodes.extend(bs4HtmlParser.parseBs4(e))
 
-        if t in ('i', 'emph',):
-            return [docutils.nodes.emphasis('', '', *nodes)]
-        elif t in ('b', 'strong',):
-            return [docutils.nodes.strong('', '', *nodes)]
-        elif t in ('tt', 'code',):
-            return [docutils.nodes.literal('', '', *nodes)]
-        elif t == 'p':
+        if t in self.inline + ('p',):
+            if t in ('i', 'emph',):
+                node = docutils.nodes.emphasis('', '')
+            elif t in ('b', 'strong',):
+                node = docutils.nodes.strong('', '')
+            elif t in ('tt', 'code',):
+                node = docutils.nodes.literal('', '')
+            elif t == 'p':
+                node = docutils.nodes.paragraph('', '')
+            else:
+                raise NotImplementedError(str(element))
+
+            parent = context.getDocNode()
+            parent += node #TODO replace with chained call to `append()`
+            context.pushContext(node, element)
+            for e in element.children: bs4HtmlParser.parseBs4(e, context=context)
+            context.popContext()
+
             # Special case: empty parahraphs (e.g. `<p/>`)
-            if len(nodes) == 0: nodes = [docutils.nodes.Text('')]
-            return [docutils.nodes.paragraph('', '', *nodes)]
+            if t == 'p' and len(node) == 0:
+                node += docutils.nodes.Text('')
+
         elif t == 'a':
-            if element.has_attr('name'):
-                #TODO for now ignoring old way of creating an anchor target
-                return [docutils.nodes.paragraph('', '', *nodes)]
-            elif element.has_attr('href'):
-                #TODO for now assuming an URL target
-                if len(nodes) == 1 and isinstance(nodes[0], docutils.nodes.Text):
-                    name = nodes[0].astext()
-                    #TODO for now doing no escape of `name` argument - this would form
-                    #     a target ID and would likely be properly escaped
-                    reference = docutils.nodes.reference('', name, name=name)
-                    reference['refuri'] = element['href']
-                    reference['anonymous'] = 1
-                    return [reference]
+            #TODO if element.has_attr('name'):
+            #TODO     #TODO for now ignoring old way of creating an anchor target
+            #TODO     return [docutils.nodes.paragraph('', '', *nodes)]
+            #TODO elif element.has_attr('href'):
+            #TODO     #TODO for now assuming an URL target
+            #TODO     if len(nodes) == 1 and isinstance(nodes[0], docutils.nodes.Text):
+            #TODO         name = nodes[0].astext()
+            #TODO         #TODO for now doing no escape of `name` argument - this would form
+            #TODO         #     a target ID and would likely be properly escaped
+            #TODO         reference = docutils.nodes.reference('', name, name=name)
+            #TODO         reference['refuri'] = element['href']
+            #TODO         reference['anonymous'] = 1
+            #TODO         return [reference]
             raise NotImplementedError(str(element))
         elif t in ('html', 'body','div',):
-            return nodes
+            for e in element.children: bs4HtmlParser.parseBs4(e, context=context)
         elif t in self.headings:
-            #TODO: ignore for now
-            return []
+            # In RST, heading creates a new (sub)section and puts the heading text
+            # as a title node of that section. All the following RST elements go
+            # under that section, too. The section node, nor its title sub-node,
+            # keeps track of section/heading's level; the level is eventually implied
+            # by the document tree hierarchy.
+            #
+            # Hence for the HTML headings, we generally ignore heading's level. We
+            # only use the level number to decide if we create a new subsection,
+            # or if we need to pop context to a section closer to the document tree
+            # root.
+            #
+            # For example:
+            #
+            #   <h1>H1</h1>
+            #   <h5>H5</h5>
+            #   <h2>H2</h2>
+            #
+            # would lead to the following document tree structure:
+            #
+            #   document
+            #     - section
+            #       - title H1
+            #       - section
+            #         - title H5
+            #       - section
+            #         - title H2
+            #
+
+            # section level
+            slevel = 0
+            parent = context.getDocNode()
+            while parent is not None:
+                if isinstance(parent, docutils.nodes.section): slevel += 1
+                parent = parent.parent
+
+            hlevel = int(t[1]) # heading level
+
+            # recover the parser context to a proper level
+            while hlevel <= slevel:
+                parent = context.getDocNode()
+                if isinstance(parent, docutils.nodes.section): slevel -= 1
+                context.popContext()
+
+            # create new section node
+            node = docutils.nodes.section('')
+            context.getDocNode().append(node)
+            context.pushContext(node, element)
+
+            # create new title node
+            node = docutils.nodes.title('', '')
+            context.getDocNode().append(node)
+            context.pushContext(node, element)
+
+            # parse the heading title
+            for e in element.children: bs4HtmlParser.parseBs4(e, context=context)
+
+            # recover the context to the section node
+            # (we do not expect the context stack has been manipulated while parsing
+            # the heading's text/title)
+            assert isinstance(context.peekContext().getDocNode(), docutils.nodes.section)
+            context.popContext()
         else:
             raise ValueError(f"Cannot handle '<{t}>' elements!")
 
@@ -90,7 +212,9 @@ class Bs4TableHandler(object):
         return ('table', 'tbody', 'thead', 'tr', 'th', 'td', 'colgroup', 'col')
 
 
-    def handle(self, element, bs4HtmlParser):
+    def handle(self, element, bs4HtmlParser, context):
+        raise NotImplementedError(str(element))
+        assert isinstance(context, Bs4ParserContext) #TODO turn to proper exception type
         t = element.name
 
         if t == 'table':
@@ -141,9 +265,7 @@ class Bs4TableHandler(object):
             return [table]
 
         elif t in ('thead', 'tbody',):
-            nodes = []
-            for e in [c for c in element.children if isinstance(c, bs4.Tag)]: nodes.extend(bs4HtmlParser.parseBs4(e))
-            return nodes
+            for e in [c for c in element.children if isinstance(c, bs4.Tag)]: bs4HtmlParser.parseBs4(e, context=context)
 
         elif t == 'tr':
             # sanity check for 'cell' type HTML elements
@@ -233,7 +355,7 @@ class Bs4HtmlParser(HtmlParser):
         return self.parseBs4(soup, document)
 
 
-    def parseBs4(self, element, document=None):
+    def parseBs4(self, element, document=None, context=None):
         """Parses a BeautifulSoup element.
 
         Raise
@@ -246,15 +368,17 @@ class Bs4HtmlParser(HtmlParser):
             elements = element.children
             if document is None:
                 document = docutils.utils.new_document('', None)
+            if context is None:
+                context = Bs4ParserContext(document, element)
         else:
+            assert isinstance(context, Bs4ParserContext) #TODO change to proper exception raising
             elements = [element]
 
-        nodes = []
         for element in elements:
             if isinstance(element, bs4.Tag):
                 t = element.name
                 if t in self.handlers:
-                    nodes.extend(self.handlers[t].handle(element,self))
+                    self.handlers[t].handle(element, self, context)
                 else:
                     #TODO add a system message about unsupported HTML tag
                     pass
@@ -263,25 +387,26 @@ class Bs4HtmlParser(HtmlParser):
                 # the former class test must precede the latter class test
                 text = element.string
                 comment = docutils.nodes.comment(text, text)
-                nodes.append(comment)
+                parent = context.getDocNode()
+                parent += comment #TODO replace with chained call to `append()`
             elif isinstance(element, bs4.NavigableString):
                 s = element.string
                 if Bs4TableHandler.whitespace.match(s) is None:
-                    nodes.append(docutils.nodes.Text(re.sub('\n+$', '', s)))
+                    context.getDocNode().append(docutils.nodes.Text(re.sub('\n+$', '', s)))
             else:
                 raise TypeError(f"Expecting bs4 type but got '{element.__class__.__name__}'")
 
         if document is not None:
-            # docutils 0.16: reference type nodes are expected to be inside a TextElement parent
-            directRefs = [n for n in nodes if isinstance(n, docutils.nodes.reference)]
-            if len(directRefs) > 0:
-                p = docutils.nodes.paragraph()
-                p.extend(nodes)
-                nodes = [p]
+            #TODO # docutils 0.16: reference type nodes are expected to be inside a TextElement parent
+            #TODO directRefs = [n for n in document.children if isinstance(n, docutils.nodes.reference)]
+            #TODO if len(directRefs) > 0:
+            #TODO     p = docutils.nodes.paragraph()
+            #TODO     p.extend(nodes)
+            #TODO     nodes = [p]
 
-            document.extend(nodes)
+            #TODO document.extend(nodes)
             return document
         else:
-            return nodes
+            return None
 
 
