@@ -101,7 +101,8 @@ class Bs4DefaultHandler(object):
 
 
     def canHandle(self):
-        return self.inline + ('html', 'body', 'div', 'p', 'a') + self.headings + self.lists
+        return self.inline + ('html', 'body', 'div', 'p', 'a') + self.headings + self.lists + (
+            'img', )
 
 
     def handle(self, element, bs4HtmlParser, context):
@@ -125,7 +126,7 @@ class Bs4DefaultHandler(object):
             for e in element.children: bs4HtmlParser.parseBs4(e, context=context)
             context.popContext()
 
-            # Special case: empty parahraphs (e.g. `<p/>`)
+            # Special case: empty paragraphs (e.g. `<p/>`)
             if t == 'p' and len(node) == 0:
                 node += docutils.nodes.Text('')
 
@@ -135,9 +136,10 @@ class Bs4DefaultHandler(object):
                 node.replace_attr('bullet', '*')
                 if element.has_attr('style'):
                     for style in Bs4DefaultHandler.splitStyleAttr(element['style']):
-                        k, v = style.split(':')
-                        k = k.strip()
-                        v = v.strip()
+                        l = style.split(':')
+                        if len(l) < 2: continue
+                        k = l[0].strip()
+                        v = l[1].strip()
                         if k == 'list-style-type':
                             node.replace_attr('bullet', self.bullet_styles.get(v, '*'))
             elif t == 'ol':
@@ -149,9 +151,10 @@ class Bs4DefaultHandler(object):
                     node.replace_attr('enumtype', self.enum_styles.get(self.enum_types.get(element['type']), 'arabic'))
                 if element.has_attr('style'):
                     for style in Bs4DefaultHandler.splitStyleAttr(element['style']):
-                        k, v = style.split(':')
-                        k = k.strip()
-                        v = v.strip()
+                        l = style.split(':')
+                        if len(l) < 2: continue
+                        k = l[0].strip()
+                        v = l[1].strip()
                         if k == 'list-style-type':
                             node.replace_attr('enumtype', self.enum_styles.get(v, 'arabic'))
                 if element.has_attr('start'):
@@ -185,6 +188,36 @@ class Bs4DefaultHandler(object):
             #TODO         reference['anonymous'] = 1
             #TODO         return [reference]
             raise NotImplementedError(str(element))
+
+        elif t == 'img':
+            # required attributes
+            url = None
+            if element.has_attr('src'): url = element['src']
+
+            if url is not None:
+                node = docutils.nodes.image('')
+                node.replace_attr('uri', url)
+
+                # optional attributes
+                for attr in ['alt', 'width', 'height', 'scale', 'align']:
+                    if element.has_attr(attr):
+                        node.replace_attr(attr, element[attr])
+
+                # optional CSS alignment styling
+                if element.has_attr('style'):
+                    for style in Bs4DefaultHandler.splitStyleAttr(element['style']):
+                        l = style.split(':')
+                        if len(l) < 2: continue
+                        k = l[0].strip()
+                        v = l[1].strip()
+                        if k in ('vertical-align', 'text-align'):
+                            node.replace_attr('align', v)
+
+                context.getDocNode().append(node)
+
+            # IMPORTANT: We do not expect to have any elements under `<img>` and hence
+            # do not recourse!
+
         elif t in ('html', 'body','div',):
             for e in element.children: bs4HtmlParser.parseBs4(e, context=context)
         elif t in self.headings:
@@ -284,7 +317,7 @@ class Bs4DefaultHandler(object):
         # sanitize direct children of `Text` type, which should wrap under
         # a paragraph node
         # (Due to other inline markup, a block of free text (i.e. unwrapped in paragraph)
-        # may split into a series of document tree nodes. Hence we first indentify such
+        # may split into a series of document tree nodes. Hence we first identify such
         # blocks and then wrap them under paragraph nodes.)
         blocks = []
         block = []
