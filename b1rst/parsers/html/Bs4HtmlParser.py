@@ -1,11 +1,11 @@
 # Copyright 2024 Tomas Brabec
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -213,7 +213,6 @@ class Bs4TableHandler(object):
 
 
     def handle(self, element, bs4HtmlParser, context):
-        raise NotImplementedError(str(element))
         assert isinstance(context, Bs4ParserContext) #TODO turn to proper exception type
         t = element.name
 
@@ -223,11 +222,14 @@ class Bs4TableHandler(object):
             if len(unsupported) > 0:
                 raise ValueError(f"Unsupported elements under '<{t}>': {unsupported}")
 
-            nodes = []
-            for e in [c for c in element.children if isinstance(c, bs4.Tag)]: nodes.extend(bs4HtmlParser.parseBs4(e))
-
-##            if t == 'table' and len(nodes) == 1 and isinstance(nodes[0], docutils.nodes.table):
-##                return nodes
+            # create a new table body node and associate it with a new, empty context
+            # (table parsing runs in a separate context so that structural elements
+            # like headings in table cells do not interact with the incoming `context`
+            # outside the table)
+            tbody = docutils.nodes.tbody()
+            tablecontext = Bs4ParserContext(tbody, element)
+            for e in [c for c in element.children if isinstance(c, bs4.Tag)]: bs4HtmlParser.parseBs4(e, context=tablecontext)
+            nodes = tbody.children
 
             # sanity check for 'row' type doctree subnodes
             unsupported = [n for n in nodes if not isinstance(n, docutils.nodes.row)]
@@ -235,10 +237,8 @@ class Bs4TableHandler(object):
                 raise ValueError(f"Unsupported doctree subnodes for a table node: {[n.__class__.__name__ for n in unsupported]}")
 
             cols = 0
-            tbody = docutils.nodes.tbody()
             for r in nodes:
                 rcols = 0
-                tbody += r
                 for c in r:
                     if isinstance(c, docutils.nodes.entry):
                         if 'colspan' in c: rcols += c['colspan']
@@ -262,7 +262,7 @@ class Bs4TableHandler(object):
             table['classes'] += ['colwidths-auto']
             table += tgroup
 
-            return [table]
+            context.getDocNode().append(table)
 
         elif t in ('thead', 'tbody',):
             for e in [c for c in element.children if isinstance(c, bs4.Tag)]: bs4HtmlParser.parseBs4(e, context=context)
@@ -273,17 +273,18 @@ class Bs4TableHandler(object):
             if len(unsupported) > 0:
                 raise ValueError(f"Unsupported elements under '<{t}>': {unsupported}")
 
-            nodes = []
-            for e in [c for c in element.children if isinstance(c, bs4.Tag)]: nodes.extend(bs4HtmlParser.parseBs4(e))
+            row = docutils.nodes.row()
+            context.getDocNode().append(row)
+            context.pushContext(row, element)
+
+            for e in [c for c in element.children if isinstance(c, bs4.Tag)]: bs4HtmlParser.parseBs4(e, context=context)
+
+            context.popContext()
 
             # sanity check for 'cell' type doctree subnodes
-            unsupported = [n for n in nodes if not isinstance(n, docutils.nodes.entry)]
+            unsupported = [n for n in row.children if not isinstance(n, docutils.nodes.entry)]
             if len(unsupported) > 0:
                 raise ValueError(f"Unsupported doctree subnodes for a row node: {[n.__class__.__name__ for n in unsupported]}")
-
-            row = docutils.nodes.row()
-            row.extend(nodes)
-            return [row]
 
         elif t in ('td', 'th',):
             attributes = {}
@@ -292,18 +293,38 @@ class Bs4TableHandler(object):
             if element.has_attr('colspan') and int(element['colspan']) > 1:
                 attributes['morecols'] = int(element['colspan']) - 1
             cell = docutils.nodes.entry(**attributes)
-            for e in element.children:
-                for n in bs4HtmlParser.parseBs4(e):
-                    if isinstance(n, docutils.nodes.Text):
-                        p = docutils.nodes.paragraph()
-                        p += n
-                        cell.append(p)
-                    else:
-                        cell.append(n)
-            return [cell]
+            context.getDocNode().append(cell)
+            context.pushContext(cell, element)
+
+            for e in element.children: bs4HtmlParser.parseBs4(e, context=context)
+
+            context.popContext()
+
+            # sanitize direct children of `Text` type, which should wrap under
+            # a paragraph node
+            # (Due to other inline markup, a block of free text (i.e. unwrapped in paragraph)
+            # may split into a series of document tree nodes. Hence we first indentify such
+            # blocks and then wrap them under paragraph nodes.)
+            blocks = []
+            block = []
+            for n in cell.children:
+                if isinstance(n, docutils.nodes.Text) or isinstance(n, docutils.nodes.Inline):
+                    block.append(n)
+                elif len(block) > 0:
+                    blocks.append(block)
+                    block = []
+            if len(block) > 0: blocks.append(block)
+
+            for block in blocks:
+                p = docutils.nodes.paragraph()
+                for i in range(0, len(block)):
+                    n = block[i]
+                    if i == 0: cell.replace(n, p)
+                    else: cell.remove(n)
+                    p += n
 
         elif t in ('colgroup', 'col',): # ignored HTML tags/elements
-            return []
+            pass
 
         else:
             raise ValueError(f"Cannot handle '<{t}>' elements!")
