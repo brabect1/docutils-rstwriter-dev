@@ -89,8 +89,19 @@ class Bs4DefaultHandler(object):
 
     inline = ('i', 'emph', 'b', 'strong', 'tt', 'code')
 
+    lists = ('ul', 'ol', 'li')
+
+    bullet_styles = {'none': '*', 'disc': '*', 'circle': '+', 'square': '-'}
+
+    enum_types = {'1': 'decimal', 'A': 'upper-alpha', 'a': 'lower-alpha', 'I': 'upper-roman', 'i': 'lower-roman'}
+
+    enum_styles = {'decimal': 'arabic', 'lower-alpha': 'loweralpha', 'lower-latin': 'loweralpha',
+            'upper-alpha': 'upperalpha', 'upper-latin': 'upperalpha', 'lower-roman': 'lowerroman',
+            'upper-roman': 'upperroman'}
+
+
     def canHandle(self):
-        return self.inline + ('html', 'body', 'div', 'p', 'a') + self.headings
+        return self.inline + ('html', 'body', 'div', 'p', 'a') + self.headings + self.lists
 
 
     def handle(self, element, bs4HtmlParser, context):
@@ -109,8 +120,7 @@ class Bs4DefaultHandler(object):
             else:
                 raise NotImplementedError(str(element))
 
-            parent = context.getDocNode()
-            parent += node #TODO replace with chained call to `append()`
+            context.getDocNode().append( node )
             context.pushContext(node, element)
             for e in element.children: bs4HtmlParser.parseBs4(e, context=context)
             context.popContext()
@@ -118,6 +128,47 @@ class Bs4DefaultHandler(object):
             # Special case: empty parahraphs (e.g. `<p/>`)
             if t == 'p' and len(node) == 0:
                 node += docutils.nodes.Text('')
+
+        elif t in self.lists:
+            if t == 'ul':
+                node = docutils.nodes.bullet_list('')
+                node.replace_attr('bullet', '*')
+                if element.has_attr('style'):
+                    for style in Bs4DefaultHandler.splitStyleAttr(element['style']):
+                        k, v = style.split(':')
+                        k = k.strip()
+                        v = v.strip()
+                        if k == 'list-style-type':
+                            node.replace_attr('bullet', self.bullet_styles.get(v, '*'))
+            elif t == 'ol':
+                node = docutils.nodes.enumerated_list('')
+                node.replace_attr('enumtype', 'arabic')
+                node.replace_attr('prefix', '')
+                node.replace_attr('suffix', '.')
+                if element.has_attr('type'):
+                    node.replace_attr('enumtype', self.enum_styles.get(self.enum_types.get(element['type']), 'arabic'))
+                if element.has_attr('style'):
+                    for style in Bs4DefaultHandler.splitStyleAttr(element['style']):
+                        k, v = style.split(':')
+                        k = k.strip()
+                        v = v.strip()
+                        if k == 'list-style-type':
+                            node.replace_attr('enumtype', self.enum_styles.get(v, 'arabic'))
+                if element.has_attr('start'):
+                    node.replace_attr('start', int(element['start']))
+            elif t == 'li':
+                node = docutils.nodes.list_item('')
+            else:
+                raise NotImplementedError(str(element))
+
+            context.getDocNode().append(node)
+            context.pushContext(node, element)
+            for e in element.children: bs4HtmlParser.parseBs4(e, context=context)
+            context.popContext()
+
+            # sanitize non-wrapped text (under list items)
+            if t == 'li':
+                Bs4DefaultHandler.paragraphize(node)
 
         elif t == 'a':
             #TODO if element.has_attr('name'):
@@ -200,6 +251,58 @@ class Bs4DefaultHandler(object):
             context.popContext()
         else:
             raise ValueError(f"Cannot handle '<{t}>' elements!")
+
+
+    @classmethod
+    def splitStyleAttr(cls, attr):
+        """
+        Splits the style attribute by semicolons.
+
+        Returns a list of style components.
+        """
+
+        if attr is None: return []
+
+        return [s.strip() for s in attr.split(';')]
+
+
+    @classmethod
+    def paragraphize(cls, node):
+        """
+        Wraps all non-structural, direct children of `node` into paragraphs.
+
+        This method sanitizes the `node` to have only structural elements as its direct
+        children. That is, continuous blocks of non-structural nodes (i.e. `Text` and
+        `Inlinde` nodes) are put into a paragraph nodes that then replace those blocks
+        as children of `node`.
+        """
+
+        if node is None: pass
+        if not isinstance(node, docutils.nodes.Node):
+            raise ValueError(f'`node` has unexpected type: {node.__class__.__name__}')
+
+        # sanitize direct children of `Text` type, which should wrap under
+        # a paragraph node
+        # (Due to other inline markup, a block of free text (i.e. unwrapped in paragraph)
+        # may split into a series of document tree nodes. Hence we first indentify such
+        # blocks and then wrap them under paragraph nodes.)
+        blocks = []
+        block = []
+        for n in node.children:
+            if isinstance(n, docutils.nodes.Text) or isinstance(n, docutils.nodes.Inline):
+                block.append(n)
+            elif len(block) > 0:
+                blocks.append(block)
+                block = []
+        if len(block) > 0: blocks.append(block)
+
+        for block in blocks:
+            p = docutils.nodes.paragraph()
+            for i in range(0, len(block)):
+                n = block[i]
+                if i == 0: node.replace(n, p)
+                else: node.remove(n)
+                p += n
 
 
 class Bs4TableHandler(object):
@@ -302,26 +405,7 @@ class Bs4TableHandler(object):
 
             # sanitize direct children of `Text` type, which should wrap under
             # a paragraph node
-            # (Due to other inline markup, a block of free text (i.e. unwrapped in paragraph)
-            # may split into a series of document tree nodes. Hence we first indentify such
-            # blocks and then wrap them under paragraph nodes.)
-            blocks = []
-            block = []
-            for n in cell.children:
-                if isinstance(n, docutils.nodes.Text) or isinstance(n, docutils.nodes.Inline):
-                    block.append(n)
-                elif len(block) > 0:
-                    blocks.append(block)
-                    block = []
-            if len(block) > 0: blocks.append(block)
-
-            for block in blocks:
-                p = docutils.nodes.paragraph()
-                for i in range(0, len(block)):
-                    n = block[i]
-                    if i == 0: cell.replace(n, p)
-                    else: cell.remove(n)
-                    p += n
+            Bs4DefaultHandler.paragraphize(cell)
 
         elif t in ('colgroup', 'col',): # ignored HTML tags/elements
             pass
@@ -362,9 +446,9 @@ class Bs4HtmlParser(HtmlParser):
             for tag in handler.canHandle():
                 self.handlers[tag] = handler
 
+
     def parse(self, inputstring, document):
         self.parseHtml(inputstring, document)
-        #TODO print(document.pformat())
 
 
     def parseHtml(self, html, document=None):
