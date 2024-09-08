@@ -181,20 +181,21 @@ class Bs4DefaultHandler(object):
                 Bs4DefaultHandler.paragraphize(node)
 
         elif t == 'a':
-            #TODO if element.has_attr('name'):
-            #TODO     #TODO for now ignoring old way of creating an anchor target
-            #TODO     return [docutils.nodes.paragraph('', '', *nodes)]
-            #TODO elif element.has_attr('href'):
-            #TODO     #TODO for now assuming an URL target
-            #TODO     if len(nodes) == 1 and isinstance(nodes[0], docutils.nodes.Text):
-            #TODO         name = nodes[0].astext()
-            #TODO         #TODO for now doing no escape of `name` argument - this would form
-            #TODO         #     a target ID and would likely be properly escaped
-            #TODO         reference = docutils.nodes.reference('', name, name=name)
-            #TODO         reference['refuri'] = element['href']
-            #TODO         reference['anonymous'] = 1
-            #TODO         return [reference]
-            raise NotImplementedError(str(element))
+            if element.has_attr('name'):
+                #TODO for now ignoring old way of creating an anchor target
+                for e in element.children: bs4HtmlParser.parseBs4(e, context=context)
+            elif element.has_attr('href'):
+                #TODO for now assuming an URL target
+                if len(element.contents) == 1 and isinstance(element.contents[0], bs4.NavigableString):
+                    name = element.contents[0].string
+                    #TODO for now doing no escape of `name` argument - this would form
+                    #     a target ID and would likely be properly escaped
+                    reference = docutils.nodes.reference('', name, name=name)
+                    reference['refuri'] = element['href']
+                    #TODO reference['anonymous'] = 1
+                    context.getDocNode().append(reference)
+            else:
+                raise NotImplementedError(str(element))
 
         elif t == 'img':
             # required attributes

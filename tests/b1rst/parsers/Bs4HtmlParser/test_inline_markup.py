@@ -569,91 +569,67 @@ document:
 #TODO ]
 
 
-#TODO totest['embedded_URIs'] = [
-#TODO ["""\
-#TODO `phrase reference <http://example.com>`_
-#TODO """,
-#TODO """\
-#TODO `phrase reference <http://example.com>`_
-#TODO """],
+
+totest['embedded_URIs'] = [
+["""\
+<a href="https://www.python.org/">Python</a>
+""",
+"""\
+document:
+  attrs:
+    source: <string>
+  children:
+  - reference:
+      attrs:
+        name: Python
+        refuri: https://www.python.org/
+      children:
+      - Python
+"""],
+["""\
+<a href="https://www.python.org/">Python</a>
+<a href="https://www.w3schools.com">W3Schools.com</a>
+""",
+"""\
+document:
+  attrs:
+    source: <string>
+  children:
+  - reference:
+      attrs:
+        name: Python
+        refuri: https://www.python.org/
+      children:
+      - Python
+  - reference:
+      attrs:
+        name: W3Schools.com
+        refuri: https://www.w3schools.com
+      children:
+      - W3Schools.com
+"""],
+#TODO # Anonymous URI references resolve to normal ones!
 #TODO ["""\
 #TODO `anonymous reference <http://example.com>`__
 #TODO """,
-#TODO # Anonymous URI references resolve to normal ones!
 #TODO """\
 #TODO `anonymous reference <http://example.com>`_
 #TODO """],
-#TODO ["""\
-#TODO `embedded URI on next line
-#TODO <http://example.com>`__
-#TODO """,
-#TODO """\
-#TODO `embedded URI on next line <http://example.com>`_
-#TODO """],
-#TODO ["""\
-#TODO `embedded URI across lines <http://example.com/
-#TODO long/path>`__
-#TODO """,
-#TODO """\
-#TODO `embedded URI across lines <http://example.com/long/path>`_
-#TODO """],
-#TODO ["""\
-#TODO `embedded URI with whitespace <http://example.com/
-#TODO long/path /and  /whitespace>`__
-#TODO """,
-#TODO """\
-#TODO `embedded URI with whitespace <http://example.com/long/path/and/whitespace>`_
-#TODO """],
-#TODO [r"""
-#TODO `embedded URI with escaped whitespace <http://example.com/a\
-#TODO long/path\ and/some\ escaped\ whitespace>`__
-#TODO 
-#TODO `<omitted\ reference\ text\ with\ escaped\ whitespace>`__
-#TODO """,
-#TODO """\
-#TODO `embedded URI with escaped whitespace <http://example.com/a\ long/path\ and/some\ escaped\ whitespace>`_
-#TODO 
-#TODO `<omitted\ reference\ text\ with\ escaped\ whitespace>`_
-#TODO """],
-#TODO ["""\
-#TODO `embedded email address <jdoe@example.com>`__
-#TODO 
-#TODO `embedded email address <mailto:jdoe@example.com>`__
-#TODO 
-#TODO `embedded email address broken across lines <jdoe
-#TODO @example.com>`__
-#TODO """,
-#TODO """\
-#TODO `embedded email address <mailto:jdoe@example.com>`_
-#TODO 
-#TODO `embedded email address <mailto:jdoe@example.com>`_
-#TODO 
-#TODO `embedded email address broken across lines <mailto:jdoe@example.com>`_
-#TODO """],
-#TODO [r"""`embedded URI with too much whitespace < http://example.com/
-#TODO long/path /and  /whitespace >`__
-#TODO 
-#TODO `embedded URI with too much whitespace at end <http://example.com/
-#TODO long/path /and  /whitespace >`__
-#TODO 
-#TODO `embedded URI with no preceding whitespace<http://example.com>`__
-#TODO 
-#TODO `escaped URI \<http://example.com>`__
-#TODO 
-#TODO See `HTML Anchors: \<a>`_.
-#TODO """,
-#TODO r"""`embedded URI with too much whitespace \< http://example.com/
-#TODO long/path /and  /whitespace >`__
-#TODO 
-#TODO `embedded URI with too much whitespace at end \<http://example.com/
-#TODO long/path /and  /whitespace >`__
-#TODO 
-#TODO `embedded URI with no preceding whitespace\<http://example.com>`__
-#TODO 
-#TODO `escaped URI \<http://example.com>`__
-#TODO 
-#TODO See `HTML Anchors: \<a>`_.
-#TODO """],
+["""\
+<a href="mailto:jdoe@example.com">embedded email address</a>
+""",
+"""\
+document:
+  attrs:
+    source: <string>
+  children:
+  - reference:
+      attrs:
+        name: embedded email address
+        refuri: mailto:jdoe@example.com
+      children:
+      - embedded email address
+"""],
 #TODO ["""\
 #TODO Relative URIs' reference text can be omitted:
 #TODO 
@@ -669,61 +645,7 @@ document:
 #TODO 
 #TODO `<anonymous>`_
 #TODO """],
-#TODO [r"""
-#TODO Escape trailing low-line char in URIs:
-#TODO 
-#TODO `<reference\_>`_
-#TODO 
-#TODO `<anonymous\_>`__
-#TODO """,
-#TODO """\
-#TODO Escape trailing low-line char in URIs:
-#TODO 
-#TODO `<reference\_>`_
-#TODO 
-#TODO `<anonymous\_>`_
-#TODO """],
-#TODO ["""\
-#TODO Escape other char in URIs:
-#TODO 
-#TODO `<reference\\:1>`_
-#TODO 
-#TODO `<anonymous\\call>`__
-#TODO """,
-#TODO """\
-#TODO Escape other char in URIs:
-#TODO 
-#TODO `<reference:1>`_
-#TODO 
-#TODO `<anonymouscall>`_
-#TODO """],
-#TODO ["""\
-#TODO `reference_`_
-#TODO 
-#TODO `reference\\_`_
-#TODO 
-#TODO `<reference\\_>`_
-#TODO 
-#TODO `<reference_>`_
-#TODO 
-#TODO `<reference_name>`_
-#TODO 
-#TODO `<reference\\_name>`_
-#TODO """,
-#TODO """\
-#TODO `reference\\_`_
-#TODO 
-#TODO `reference\\_`_
-#TODO 
-#TODO `<reference\\_>`_
-#TODO 
-#TODO reference_
-#TODO 
-#TODO `<reference\\_name>`_
-#TODO 
-#TODO `<reference\\_name>`_
-#TODO """],
-#TODO ]
+]
 
 
 #TODO totest['embedded_aliases'] = [
