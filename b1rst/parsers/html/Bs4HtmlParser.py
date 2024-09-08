@@ -102,14 +102,14 @@ class Bs4DefaultHandler(object):
 
     def canHandle(self):
         return self.inline + ('html', 'body', 'div', 'p', 'a') + self.headings + self.lists + (
-            'img', )
+            'img', 'figure', 'figcaption')
 
 
     def handle(self, element, bs4HtmlParser, context):
         assert isinstance(context, Bs4ParserContext) #TODO turn to proper exception type
         t = element.name
 
-        if t in self.inline + ('p',):
+        if t in self.inline + ('p', 'figure', 'figcaption'):
             if t in ('i', 'emph',):
                 node = docutils.nodes.emphasis('', '')
             elif t in ('b', 'strong',):
@@ -118,6 +118,10 @@ class Bs4DefaultHandler(object):
                 node = docutils.nodes.literal('', '')
             elif t == 'p':
                 node = docutils.nodes.paragraph('', '')
+            elif t == 'figure':
+                node = docutils.nodes.figure('')
+            elif t == 'figcaption':
+                node = docutils.nodes.caption('', '')
             else:
                 raise NotImplementedError(str(element))
 
@@ -127,19 +131,26 @@ class Bs4DefaultHandler(object):
             context.popContext()
 
             # Special case: empty paragraphs (e.g. `<p/>`)
-            if t == 'p' and len(node) == 0:
+            if t in ('p', 'figcaption') and len(node) == 0:
                 node += docutils.nodes.Text('')
+
+            # Remove empty figures.
+            if t == 'figure' and len(node) == 0:
+                if node.document and node.document.reporter:
+                    msg = node.document.reporter.system_message(node.document.reporter.WARNING_LEVEL,
+                        "Empty `<figure>` HTML element.",
+                        line=element.sourceline)
+                    msg += docutils.nodes.literal_block(str(element), str(element))
+                    context.getDocNode().replace(node, msg)
+                else:
+                    context.getDocNode().remove(node)
 
         elif t in self.lists:
             if t == 'ul':
                 node = docutils.nodes.bullet_list('')
                 node.replace_attr('bullet', '*')
                 if element.has_attr('style'):
-                    for style in Bs4DefaultHandler.splitStyleAttr(element['style']):
-                        l = style.split(':')
-                        if len(l) < 2: continue
-                        k = l[0].strip()
-                        v = l[1].strip()
+                    for (k,v) in Bs4DefaultHandler.getElementStyles(element):
                         if k == 'list-style-type':
                             node.replace_attr('bullet', self.bullet_styles.get(v, '*'))
             elif t == 'ol':
@@ -150,11 +161,7 @@ class Bs4DefaultHandler(object):
                 if element.has_attr('type'):
                     node.replace_attr('enumtype', self.enum_styles.get(self.enum_types.get(element['type']), 'arabic'))
                 if element.has_attr('style'):
-                    for style in Bs4DefaultHandler.splitStyleAttr(element['style']):
-                        l = style.split(':')
-                        if len(l) < 2: continue
-                        k = l[0].strip()
-                        v = l[1].strip()
+                    for (k,v) in Bs4DefaultHandler.getElementStyles(element):
                         if k == 'list-style-type':
                             node.replace_attr('enumtype', self.enum_styles.get(v, 'arabic'))
                 if element.has_attr('start'):
@@ -194,7 +201,14 @@ class Bs4DefaultHandler(object):
             url = None
             if element.has_attr('src'): url = element['src']
 
-            if url is not None:
+            parent = context.getDocNode()
+            if url is None and parent.document and parent.document.reporter:
+                msg = parent.document.reporter.system_message(parent.document.reporter.WARNING_LEVEL,
+                    "Missing `src` attribute in HTML element `<img>`.",
+                    line=element.sourceline)
+                msg += docutils.nodes.literal_block(str(element), str(element))
+                parent.append(msg)
+            else:
                 node = docutils.nodes.image('')
                 node.replace_attr('uri', url)
 
@@ -205,18 +219,17 @@ class Bs4DefaultHandler(object):
 
                 # optional CSS alignment styling
                 if element.has_attr('style'):
-                    for style in Bs4DefaultHandler.splitStyleAttr(element['style']):
-                        l = style.split(':')
-                        if len(l) < 2: continue
-                        k = l[0].strip()
-                        v = l[1].strip()
-                        if k in ('vertical-align', 'text-align'):
+                    for (k,v) in Bs4DefaultHandler.getElementStyles(element):
+                        if k in ('vertical-align', 'text-align', 'align'):
                             node.replace_attr('align', v)
+                        elif k in ('width', 'height', 'scale'):
+                            node.replace_attr(k, v)
 
                 context.getDocNode().append(node)
 
             # IMPORTANT: We do not expect to have any elements under `<img>` and hence
             # do not recourse!
+            assert len(element.contents) == 0
 
         elif t in ('html', 'body','div',):
             for e in element.children: bs4HtmlParser.parseBs4(e, context=context)
@@ -287,16 +300,28 @@ class Bs4DefaultHandler(object):
 
 
     @classmethod
-    def splitStyleAttr(cls, attr):
+    def getElementStyles(cls, element):
         """
         Splits the style attribute by semicolons.
 
         Returns a list of style components.
         """
 
-        if attr is None: return []
+        if element is None: return []
 
-        return [s.strip() for s in attr.split(';')]
+        if not isinstance(element, bs4.Tag):
+            raise TypeError(f'Expected bs4.Tag but got: {element.__class__.__name__}')
+
+        if not element.has_attr('style'): return []
+
+        styles = []
+        for style in [s.split(':') for s in element['style'].split(';')]:
+            if len(style) == 2:
+                styles.append(
+                    (style[0].strip(), style[1].strip())
+                    )
+
+        return styles
 
 
     @classmethod

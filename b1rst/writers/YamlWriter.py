@@ -29,6 +29,12 @@ class YamlWriter(docutils.writers.Writer):
     output = None
     """Final translated form of `document`."""
 
+    (SYSMSG_ALL, SYSMSG_ATTRS, SYSMSG_IGNORE) = range(3)
+    """Constants enumerating how the writer should treat system_message nodes."""
+
+    #TODO Contemplate if not making it part of `settings`.
+    sysmsg_handling = SYSMSG_ALL
+
     def translate(self):
         self.output = yaml.dump(self.node2dict(self.document), default_flow_style=False)
 
@@ -44,6 +50,9 @@ class YamlWriter(docutils.writers.Writer):
         if isinstance(node, docutils.nodes.Text):
             return node.astext()
 
+        if isinstance(node, docutils.nodes.system_message) and self.sysmsg_handling >= self.SYSMSG_IGNORE:
+            return {}
+
         attrs = {}
         if hasattr(node, 'attlist'):
             for name, value in node.attlist():
@@ -56,6 +65,12 @@ class YamlWriter(docutils.writers.Writer):
 
         d = {}
         if attrs: d['attrs'] = attrs;
+
+        # specific handling of `system_message` nodes
+        if isinstance(node, docutils.nodes.system_message) and self.sysmsg_handling >= self.SYSMSG_ATTRS:
+            d['children'] = []
+            return {node.tagname: d}
+
         d['children'] = [self.node2dict(c) for c in node.children]
         return {node.tagname: d}
 

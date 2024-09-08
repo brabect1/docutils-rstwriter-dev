@@ -34,148 +34,122 @@ def suite():
 
 totest = {}
 
-totest['images'] = [
+totest['figures'] = [
 ["""\
-<img src="picture.png">
+<figure><img src="picture.png"/></figure>
 """,
 """\
 document:
   attrs:
     source: <string>
   children:
-  - image:
-      attrs:
-        uri: picture.png
-      children: []
-"""],
-# <img> without `src` attribute
-["""\
-<img>
-""",
-"""\
-document:
-  attrs:
-    source: <string>
-  children:
-  - system_message:
-      attrs:
-        level: '2'
-        line: '1'
-        source: <string>
-        type: WARNING
-      children: []
-"""],
-# <img> without `src` attribute
-["""\
-<img alt="some text" width="100">
-""",
-"""\
-document:
-  attrs:
-    source: <string>
-  children:
-  - system_message:
-      attrs:
-        level: '2'
-        line: '1'
-        source: <string>
-        type: WARNING
-      children: []
-"""],
-# <img> does not have </img> counterpart and hence subsequent HTML elements
-# are indeed siblings
-["""\
-<img src="picture.png"><p>Some text.</p>
-""",
-"""\
-document:
-  attrs:
-    source: <string>
-  children:
-  - image:
-      attrs:
-        uri: picture.png
-      children: []
-  - paragraph:
+  - figure:
       children:
-      - Some text.
+      - image:
+          attrs:
+            uri: picture.png
+          children: []
 """],
 ["""\
-<img src="one two three.png"/>
+<figure/>
 """,
 """\
 document:
   attrs:
     source: <string>
   children:
-  - image:
+  - system_message:
       attrs:
-        uri: one two three.png
+        level: '2'
+        line: '1'
+        source: <string>
+        type: WARNING
       children: []
 """],
 ["""\
-<img src="picture.png" height="100" width="200" scale="50"></img>
+<figure>
+<img src="picture.png">
+<figcaption>My caption.</figcaption>
+</figure>
 """,
 """\
 document:
   attrs:
     source: <string>
   children:
-  - image:
-      attrs:
-        height: '100'
-        scale: '50'
-        uri: picture.png
-        width: '200'
-      children: []
+  - figure:
+      children:
+      - image:
+          attrs:
+            uri: picture.png
+          children: []
+      - caption:
+          children:
+          - My caption.
 """],
 ["""\
-<img src="picture.png" height="100" height="200">
+<figure>
+  <figcaption>My caption.</figcaption>
+  <img src="picture.png">
+</figure>
 """,
 """\
 document:
   attrs:
     source: <string>
   children:
-  - image:
-      attrs:
-        height: '200'
-        uri: picture.png
-      children: []
+  - figure:
+      children:
+      - caption:
+          children:
+          - My caption.
+      - image:
+          attrs:
+            uri: picture.png
+          children: []
 """],
 ["""\
-<img src="picture.png" alt="My description.">
+<figure><img src="picture.png" height="100" width="200" scale="50"></figure>
 """,
 """\
 document:
   attrs:
     source: <string>
   children:
-  - image:
-      attrs:
-        alt: My description.
-        uri: picture.png
-      children: []
+  - figure:
+      children:
+      - image:
+          attrs:
+            height: '100'
+            scale: '50'
+            uri: picture.png
+            width: '200'
+          children: []
 """],
+#TODO <figure> parsing does not presently constrain number of underneath <img> elements
 ["""\
+<figure>
 <img src="picture.png" style="vertical-align:top">
 <img src="picture.jpg" style="text-align: left ; ">
+</figure>
 """,
 """\
 document:
   attrs:
     source: <string>
   children:
-  - image:
-      attrs:
-        align: top
-        uri: picture.png
-      children: []
-  - image:
-      attrs:
-        align: left
-        uri: picture.jpg
-      children: []
+  - figure:
+      children:
+      - image:
+          attrs:
+            align: top
+            uri: picture.png
+          children: []
+      - image:
+          attrs:
+            align: left
+            uri: picture.jpg
+          children: []
 """],
 ]
 
