@@ -307,13 +307,15 @@ class tableclass(object):
             return None
         return self.rows[row].get_cell(col)
 
-    def format(self, prefix=''):
+    def format(self, prefixes=['']):
+        assert isinstance(prefixes, list) and len(prefixes) > 0
         colcount = self.get_colcount()
         colwidths = self.get_colwidths( colcount )
         rowcount = len(self.rows)
         rowheights = self.get_rowheights( rowcount )
 
         t = ''
+        tlinecnt = 0
         trule_marks = None
         brule_marks = None
         rule = None
@@ -379,7 +381,10 @@ class tableclass(object):
                         rule[m] = '+'
                 rule = ''.join(rule)
 
+            prefix = prefixes[-1]
+            if tlinecnt < len(prefixes): prefix = prefixes[tlinecnt]
             t += prefix + rule + '\n'
+            tlinecnt += 1
 #TODO            print rule
 
             # add text lines (up to row's height)
@@ -395,7 +400,10 @@ class tableclass(object):
                     else:
                         line += ' ' + fmt.format(ctexts[i][l])
                     line += ' |'
+                prefix = prefixes[-1]
+                if tlinecnt < len(prefixes): prefix = prefixes[tlinecnt]
                 t += prefix + line + '\n'
+                tlinecnt += 1
 #TODO                print line
 
             # update variables for next iteration
@@ -432,7 +440,10 @@ class tableclass(object):
                     else:
                         rule += '|'
         if rule != None:
+            prefix = prefixes[-1]
+            if tlinecnt < len(prefixes): prefix = prefixes[tlinecnt]
             t += prefix + rule
+            tlinecnt += 1
         return t
 
 

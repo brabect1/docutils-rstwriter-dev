@@ -345,6 +345,142 @@ class Writer(writers.Writer):
             return s
 
     @classmethod
+    def get_indents(cls, node):
+        """Returns a list of prefixes to be applied for lines of text associated with
+        the element.
+
+        The return value is a list composed of prefixes to be used sequentially for
+        the first line, second line, third line, etc., up to the last element in
+        the list. The last list element would then apply to all further lines of
+        the text. Hence, a list of length one would apply the same prefix to all lines
+        of the text; a list of length two would apply the first element as prefix
+        to the first line and then would apply the second element element as a prefix
+        to the second and all remaining lines of text.
+
+        Say we have a list element as follows::
+
+            - 1st line of a 1st para
+              2nd line of a 1st para
+              3rd line of a 1st para
+
+              1st line of a 2nd para
+              2nd line of a 2nd para
+
+        Then `get_indents(node1stPara)` would return `['* ', '  ']` as the first line's
+        indenting must include the list item bullet character. For the second paragraph,
+        calling `get_indents(node2ndPara)` would return `['  ']` as all the lines share
+        the same indentation string/prefix.
+        """
+
+        if node == None:
+            return [str("")]
+        #TODO elif node.hasattr("iprefix"):
+        #TODO     return node.get("iprefix");
+        else:
+            indents = []
+            #print "# <class=" + node.__class__.__name__ + ">"
+            s = str("")
+            n = node
+            while not (isinstance(n, nodes.Root) or isinstance(n, nodes.section)):
+                p = n.parent
+                if p.hasattr("iprefix"):
+                    s = p.get("iprefix")
+                    if isinstance(p, nodes.list_item):
+                        if p.index(n) == 0: indents.append(s)
+
+                        l = len(s)
+                        #TODO !!! Notice the call of `get_indent()` !!!
+                        #TODO (`get_indent()` would generally return an indentation string for 2nd+
+                        #TODO line)
+                        s = cls.get_indent(p.parent)
+                        s += " " * (l - len(s))
+                    #print "## " + n.__class__.__name__ + "=" + s;
+                    break
+                n = p
+
+            if isinstance(node, nodes.entry):
+                # This signals a table cell, hence we reset the indent.
+                assert len(indents) == 0
+                indents.append('')
+            elif isinstance(node, nodes.block_quote):
+                indents.append(s + "  ")
+            elif isinstance(node, nodes.literal_block):
+                if 'classes' in node and len(node['classes']) > 0:
+                    # The presence of `classes` attribute indicates a code
+                    # block, which needs to have exactly a 3-space indent (this
+                    # seems like a parser deficiency).
+                    indents.append(s + "   ")
+                else:
+                    indents.append(s + "    ")
+            elif isinstance(node, nodes.line_block):
+                if isinstance(node.parent, nodes.line_block):
+                    indents.append(s + '  ')
+                else:
+                    indents.append(s + "| ")
+            elif isinstance(node, nodes.list_item):
+                if isinstance(node.parent, nodes.bullet_list):
+                    p = node.parent
+                    #TODO see if can simplify to `b = p.get('bullet', '-')`
+                    b = '-'
+                    if 'bullet' in p: b = p['bullet']
+                    indents.append(s + b + " ")
+                elif isinstance(node.parent, nodes.enumerated_list):
+                    p = node.parent
+                    enumtype = p.get("enumtype")
+                    pfx = p.get("prefix")
+                    sfx = p.get("suffix")
+                    start = p.get("start")
+                    if start == None:
+                        start = 1
+                    start += p.index(node)
+                    if enumtype == "arabic":
+                        idx = 1
+                    elif enumtype == "upperalpha":
+                        idx = 'A'
+                    elif enumtype == "loweralpha":
+                        idx = 'a'
+                    elif enumtype == 'upperroman':
+                        idx = 'I'
+                    elif enumtype == 'lowerroman':
+                        idx = 'i'
+                    else:
+                        idx = '#'
+                    if idx != '#':
+                        if enumtype == "arabic":
+                            idx += start-1
+                        elif enumtype == 'upperroman':
+                            idx = roman.toRoman(roman.fromRoman(idx)+start-1)
+                        elif enumtype == 'lowerroman':
+                            idx = roman.toRoman(roman.fromRoman(idx.upper())+start-1).lower()
+                        else:
+                            idx = chr(ord(idx)+start-1)
+                    indents.append(s + pfx+str(idx)+sfx+" ")
+            elif isinstance(node, nodes.definition_list_item):
+                indents.append(s + "")
+            elif isinstance(node, nodes.definition):
+                indents.append(s + "  ")
+            elif isinstance(node, nodes.field_body):
+                indents.appaned(s + "  ")
+            elif isinstance(node, nodes.comment):
+                indents.append(s + "   ")
+            elif isinstance(node, nodes.Admonition):
+                indents.append( s+ "   ")
+            elif isinstance(node, nodes.image) and not isinstance(node.parent, nodes.figure):
+                indents.append(s + "   ")
+            elif isinstance(node, nodes.figure):
+                indents.append(s + "   ")
+            elif isinstance(node, nodes.footnote):
+                indents.append(s + "   ")
+            elif isinstance(node, nodes.citation):
+                indents.append(s + "   ")
+            elif isinstance(node, nodes.math_block):
+                indents.append(s + "   ")
+            else:
+                indents.append(s)
+
+            return indents
+
+    @classmethod
     def get_refids(cls, document):
         if not document or not isinstance(document, nodes.document):
             return {}
@@ -1076,7 +1212,7 @@ class RstCollectVisitor(nodes.SparseNodeVisitor):
 
         self.tstack = self.table_tstacks.pop()
         if self.tstack: self.tstack += self.vindent()
-        self.tstack += table.format(prefix=Writer.get_indent(node.parent)) + '\n'
+        self.tstack += table.format(prefixes=Writer.get_indents(node)) + '\n'
         #TODO cell = self.table.get_cell(4,3)
         #TODO print '-------' + str(cell.get_lineheight()) + ' ' + str(cell.lessrows)
         #TODO for l in cell.get_text().splitlines():
